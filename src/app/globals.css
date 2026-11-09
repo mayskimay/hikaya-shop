@@ -158,7 +158,7 @@ html[data-intro='seen'] .intro { display: none; }
 .tw-loop { transform-box: fill-box; transform-origin: center; animation: hk-pulse 0.8s ease-in-out infinite alternate; }
 .wings { transform-box: view-box; transform-origin: 0 0; animation: hk-flap 0.28s ease-in-out infinite alternate; }
 .bob { animation: hk-bob 1.1s ease-in-out infinite alternate; }
-.wand { transform-box: view-box; transform-origin: 5px -12px; animation: hk-wave 0.5s ease-in-out 2.2s 4 alternate; }
+.wand { transform-box: view-box; transform-origin: 0 0; animation: hk-wave 0.5s ease-in-out 2.2s 4 alternate; }
 .flash { opacity: 0; transform-box: fill-box; transform-origin: center; animation: hk-flash 1.2s ease-out 2.4s forwards; }
 .intro-skip { position: absolute; right: 20px; bottom: 20px; background: none; border: 0; color: #fff; font-size: 0.85rem; letter-spacing: 0.08em; opacity: 0.8; cursor: pointer; font-family: inherit; }
 .intro-skip:hover { opacity: 1; }
