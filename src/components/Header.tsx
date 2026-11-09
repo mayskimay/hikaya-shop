@@ -21,8 +21,9 @@ export default function Header({ locale, t }: { locale: Locale; t: Dict['nav'] }
   return (
     <header className="header">
       <div className="container header-inner">
-        <Link href={`/${locale}`} className="logo">
-          Hikaya
+        <Link href={`/${locale}`} className="logo" aria-label="Hikaya">
+          <img src="/logo-dark.svg" alt="" width={34} height={34} />
+          <span>Hikaya</span>
         </Link>
 
         <nav className={open ? 'nav open' : 'nav'} onClick={() => setOpen(false)}>

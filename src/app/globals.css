@@ -1,11 +1,12 @@
 :root {
-  --bg: #fbf9f6;
-  --surface: #f3eee7;
-  --text: #2c2926;
-  --muted: #7a726a;
-  --accent: #8b6f5c;
-  --accent-soft: #d9c9bb;
-  --line: #e4ddd3;
+  --bg: #fbfaf7;
+  --surface: #f1f3ec;
+  --text: #2b2d27;
+  --muted: #787a6e;
+  --accent: #6f7d5a;
+  --accent-soft: #d3dbc6;
+  --brand: #97a67f; /* Salbeigrün aus dem Logo */
+  --line: #e2e5da;
   --sale: #a4564a;
   --radius: 4px;
   --maxw: 1200px;
@@ -37,7 +38,8 @@ img { max-width: 100%; display: block; }
 /* Header */
 .header { border-bottom: 1px solid var(--line); background: var(--bg); position: sticky; top: 0; z-index: 10; }
 .header-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
-.logo { font-family: var(--font-display), Georgia, serif; font-size: 1.8rem; letter-spacing: 0.08em; }
+.logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-display), Georgia, serif; font-size: 1.8rem; letter-spacing: 0.08em; }
+.logo img { width: 34px; height: 34px; }
 .nav { display: flex; gap: 22px; font-size: 0.95rem; }
 .nav a:hover { color: var(--accent); }
 .header-right { display: flex; align-items: center; gap: 16px; font-size: 0.9rem; }
