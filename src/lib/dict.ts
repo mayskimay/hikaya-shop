@@ -3,6 +3,7 @@ import type { Locale } from './i18n';
 const de = {
   brand: 'Hikaya',
   tagline: 'Mode mit einer Geschichte',
+  skip: 'Überspringen',
   nav: {
     shop: 'Shop',
     new: 'Neuheiten',
@@ -82,6 +83,7 @@ export type Dict = typeof de;
 const en: Dict = {
   brand: 'Hikaya',
   tagline: 'Fashion with a story',
+  skip: 'Skip',
   nav: {
     shop: 'Shop',
     new: 'New arrivals',

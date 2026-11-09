@@ -6,6 +6,7 @@ import { getDict } from '@/lib/dict';
 import { isLocale, locales, defaultLocale } from '@/lib/i18n';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Intro from '@/components/Intro';
 
 const display = Cormorant_Garamond({
   subsets: ['latin', 'cyrillic'],
@@ -33,8 +34,16 @@ export default async function RootLayout({
   const t = getDict(locale);
 
   return (
-    <html lang={locale} className={`${display.variable} ${body.variable}`}>
+    <html lang={locale} className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
       <body>
+        {/* Wurde die Animation in dieser Sitzung schon gezeigt, wird sie sofort ausgeblendet */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(sessionStorage.getItem('hikaya-intro')==='1')document.documentElement.setAttribute('data-intro','seen')}catch(e){}",
+          }}
+        />
+        <Intro tagline={t.tagline} skipLabel={t.skip} />
         <CartProvider>
           <Header locale={locale} t={t.nav} />
           <main>{children}</main>
