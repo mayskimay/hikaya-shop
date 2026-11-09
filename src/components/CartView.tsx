@@ -4,13 +4,21 @@ import Link from 'next/link';
 import { useCart } from '@/lib/cart';
 import { formatPrice, type Locale } from '@/lib/i18n';
 import type { Dict } from '@/lib/dict';
-import { currentPrice, getProduct } from '@/lib/products';
+import { currentPrice, type Product } from '@/lib/products';
 
-export default function CartView({ locale, t }: { locale: Locale; t: Dict['cart'] }) {
+export default function CartView({
+  locale,
+  t,
+  products,
+}: {
+  locale: Locale;
+  t: Dict['cart'];
+  products: Product[];
+}) {
   const { items, remove } = useCart();
 
   const rows = items
-    .map((item) => ({ item, product: getProduct(item.slug) }))
+    .map((item) => ({ item, product: products.find((p) => p.slug === item.slug) }))
     .filter((r) => r.product !== undefined);
 
   if (rows.length === 0) {

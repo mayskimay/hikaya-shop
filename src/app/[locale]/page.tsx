@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getDict } from '@/lib/dict';
 import { isLocale, defaultLocale, type Locale } from '@/lib/i18n';
-import { categories } from '@/lib/categories';
+import { getCategories, getProducts } from '@/lib/data';
 import { filterProducts, type Product } from '@/lib/products';
 import { site } from '@/lib/site';
 import ProductCard from '@/components/ProductCard';
@@ -46,6 +46,7 @@ export default async function HomePage({
   const locale = isLocale(raw) ? raw : defaultLocale;
   const t = getDict(locale);
   const shop = `/${locale}/shop`;
+  const [categories, all] = await Promise.all([getCategories(), getProducts()]);
 
   const socials = [
     { label: 'Instagram', url: site.instagram },
@@ -81,7 +82,7 @@ export default async function HomePage({
         title={t.home.newTitle}
         viewAll={t.home.viewAll}
         href={`${shop}?category=new`}
-        items={filterProducts('new')}
+        items={filterProducts(all, 'new')}
         locale={locale}
         saleLabel={t.product.sale}
       />
@@ -89,7 +90,7 @@ export default async function HomePage({
         title={t.home.bestsellersTitle}
         viewAll={t.home.viewAll}
         href={`${shop}?category=best`}
-        items={filterProducts('best')}
+        items={filterProducts(all, 'best')}
         locale={locale}
         saleLabel={t.product.sale}
       />
@@ -97,7 +98,7 @@ export default async function HomePage({
         title={t.home.saleTitle}
         viewAll={t.home.viewAll}
         href={`${shop}?category=sale`}
-        items={filterProducts('sale')}
+        items={filterProducts(all, 'sale')}
         locale={locale}
         saleLabel={t.product.sale}
       />

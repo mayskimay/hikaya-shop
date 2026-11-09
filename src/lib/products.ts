@@ -124,20 +124,16 @@ export const sizeGuide = [
   { size: 'XL', chest: '96–100', waist: '78–82', hips: '104–108' },
 ];
 
-export function getProduct(slug: string): Product | undefined {
-  return products.find((p) => p.slug === slug);
-}
-
 export function currentPrice(p: Product): number {
   return p.salePrice ?? p.price;
 }
 
 // category: eine Hauptkategorie-id oder 'new' | 'best' | 'sale'
-export function filterProducts(category?: string, sub?: string): Product[] {
-  if (category === 'new') return products.filter((p) => p.isNew);
-  if (category === 'best') return products.filter((p) => p.bestseller);
-  if (category === 'sale') return products.filter((p) => p.salePrice !== undefined);
-  let list = products;
+export function filterProducts(all: Product[], category?: string, sub?: string): Product[] {
+  if (category === 'new') return all.filter((p) => p.isNew);
+  if (category === 'best') return all.filter((p) => p.bestseller);
+  if (category === 'sale') return all.filter((p) => p.salePrice !== undefined);
+  let list = all;
   if (category) list = list.filter((p) => p.category === category);
   if (sub) list = list.filter((p) => p.sub === sub);
   return list;

@@ -16,8 +16,15 @@ export default function ProductCard({
     <Link href={`/${locale}/product/${product.slug}`} className="card">
       <div className="img">
         {onSale && <span className="badge">{saleLabel}</span>}
-        {/* Platzhalter, bis echte Fotos vorhanden sind */}
-        <span className="ph">{product.name[locale]}</span>
+        {product.images[0] ? (
+          <img
+            src={`${product.images[0]}?w=600&auto=format`}
+            alt={product.name[locale]}
+            loading="lazy"
+          />
+        ) : (
+          <span className="ph">{product.name[locale]}</span>
+        )}
       </div>
       <h3>{product.name[locale]}</h3>
       <div className="price">

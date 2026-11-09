@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getDict } from '@/lib/dict';
 import { isLocale, defaultLocale } from '@/lib/i18n';
-import { categories, getCategory } from '@/lib/categories';
+import { getCategories, getProducts } from '@/lib/data';
 import { filterProducts } from '@/lib/products';
 import ProductCard from '@/components/ProductCard';
 
@@ -17,8 +17,9 @@ export default async function ShopPage({
   const locale = isLocale(raw) ? raw : defaultLocale;
   const t = getDict(locale);
 
-  const list = filterProducts(category, sub);
-  const activeCategory = getCategory(category);
+  const [categories, all] = await Promise.all([getCategories(), getProducts()]);
+  const list = filterProducts(all, category, sub);
+  const activeCategory = categories.find((c) => c.id === category);
 
   const special: Record<string, string> = {
     new: t.nav.new,

@@ -2,10 +2,13 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDict } from '@/lib/dict';
 import { formatPrice, isLocale, defaultLocale, locales } from '@/lib/i18n';
-import { currentPrice, getProduct, products, sizeGuide } from '@/lib/products';
+import { currentPrice, sizeGuide } from '@/lib/products';
+import { getProduct, getProducts } from '@/lib/data';
 import AddToCart from '@/components/AddToCart';
+import ProductGallery from '@/components/ProductGallery';
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const products = await getProducts();
   return locales.flatMap((locale) =>
     products.map((p) => ({ locale, slug: p.slug }))
   );
@@ -19,7 +22,7 @@ export default async function ProductPage({
   const { locale: raw, slug } = await params;
   const locale = isLocale(raw) ? raw : defaultLocale;
   const t = getDict(locale);
-  const product = getProduct(slug);
+  const product = await getProduct(slug);
   if (!product) notFound();
 
   const onSale = product.salePrice !== undefined;
@@ -31,7 +34,7 @@ export default async function ProductPage({
       </Link>
 
       <div className="product" style={{ marginTop: 20 }}>
-        <div className="main-img">{product.name[locale]}</div>
+        <ProductGallery images={product.images} name={product.name[locale]} />
 
         <div>
           <h1>{product.name[locale]}</h1>
