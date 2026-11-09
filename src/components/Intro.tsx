@@ -67,7 +67,7 @@ export default function Intro({ tagline, skipLabel }: { tagline: string; skipLab
             <stop offset="1" stopColor="#fff" stopOpacity="0.25" />
           </linearGradient>
           <path id="hk-star" d="M0 -8 L2 -2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2 -2 Z" fill="#fff" />
-          <path id="hk-flight" d="M -90 90 C 40 30, 90 340, 200 300" />
+          <path id="hk-flight" d="M -90 90 C 40 30, 90 330, 210 285" />
         </defs>
 
         {/* Logo, Schriftzug, Slogan */}
@@ -130,39 +130,44 @@ export default function Intro({ tagline, skipLabel }: { tagline: string; skipLab
               path="M0 0 C 170 110, 450 -10, 700 -230"
             />
             <g className="bob">
-              <g transform="scale(0.95)">
-                <circle r="48" fill="url(#hk-glow)" />
-                <g transform="rotate(14)">
-                  <g transform="translate(-1 -22)">
+              <g transform="scale(0.85)">
+                <circle r="50" fill="url(#hk-glow)" />
+                <g transform="rotate(12) translate(0 8)">
+                  <g transform="translate(-1 -29)">
                     <g className="wings">
-                      <g transform="translate(1 22)" fill="url(#hk-wing)" stroke="#fff" strokeWidth="0.6" strokeOpacity="0.95">
-                        <path d="M-1 -22 C-6 -42 -22 -58 -33 -52 C-40 -45 -28 -28 -1 -22 Z" />
-                        <path d="M-1 -21 C-14 -26 -34 -24 -36 -13 C-32 -5 -12 -12 -1 -21 Z" />
-                        <g fill="none" strokeWidth="0.35" strokeOpacity="0.8">
-                          <path d="M-1 -22 C-14 -35 -24 -46 -32 -50" />
-                          <path d="M-1 -22 C-12 -31 -24 -38 -36 -42" />
-                          <path d="M-1 -21 C-14 -20 -26 -17 -34 -13" />
+                      <g transform="translate(1 29)">
+                        <g fill="url(#hk-wing)" stroke="#fff" strokeWidth="0.6" strokeOpacity="0.95">
+                          <path d="M-1 -29 C-4 -48 -20 -62 -32 -57 C-38 -50 -26 -34 -1 -29 Z" />
+                          <path d="M-1 -28 C-14 -33 -34 -31 -36 -20 C-32 -12 -12 -19 -1 -28 Z" />
+                        </g>
+                        <g stroke="#fff" fill="none" strokeWidth="0.35" strokeOpacity="0.8">
+                          <path d="M-1 -29 C-13 -42 -23 -52 -31 -56" />
+                          <path d="M-1 -29 C-12 -38 -24 -44 -35 -48" />
+                          <path d="M-1 -28 C-14 -27 -26 -24 -34 -20" />
                         </g>
                       </g>
                     </g>
                   </g>
                   <g fill="#fff">
-                    <path d="M-1.6 -25 L1.8 -25 C2.8 -20 2.4 -16 1.4 -12 L-1.4 -12 C-2.4 -16 -2.8 -20 -1.6 -25 Z" />
-                    <path d="M-1.5 -13 C-8 -4 -16 6 -24 14 C-20 14 -17 18 -13 16 C-10 21 -6 17 -3 21 C0 17 4 21 7 16 C10 18 12 14 14 12 C8 4 4 -4 1.5 -13 Z" />
-                    <path d="M-24 14 C-32 18 -38 16 -44 20 C-36 21 -30 22 -22 19 Z" fillOpacity="0.6" />
-                    <path d="M-5 20 C-8 27 -12 31 -16 33 C-10 33 -4 29 0 21 Z" fillOpacity="0.6" />
-                    <circle cx="0.5" cy="-29" r="3.9" />
-                    <path d="M-3.2 -31 C-2 -35 3 -35.5 4.4 -31.5 C2 -33 -1 -32 -3.2 -31 Z" />
-                    <path d="M-3 -30 C-9 -32 -14 -28 -18 -22 C-21 -17 -26 -14 -30 -14 C-24 -11 -17 -12 -13 -17 C-10 -21 -8 -25 -3 -27 Z" />
-                    <circle cx="-5" cy="-33" r="1.8" />
+                    <path d="M-3 -4 C-8 2 -14 6 -20 6 L-20.5 8.2 C-12 9 -5 6 1 -2 Z" />
+                    <path d="M-20.5 8 C-22 7 -24 8 -24.5 10 C-23 10.5 -21.5 10 -20.5 8 Z" />
+                    <path d="M-1 -3 C2 3 4 9 4.5 14 L7 14 C7 8 5 1 3 -4 Z" />
+                    <path d="M4.3 13.5 C6 13.2 9 14.5 10.5 17 C8.5 17.5 5.5 17 4.3 15.5 Z" />
+                    <path d="M-2 -17 C-9 -12 -17 -6 -27 -1 C-23 -1 -21 3 -17 1 C-14 5 -10 1 -7 3 C-4 1 0 4 2 0 C6 1 8 -1 8 -4 C6 -9 4 -13 2.5 -17 Z" />
+                    <path d="M-2.4 -31 L1.6 -31.5 C3.4 -27 3.4 -22 2.6 -17 L-2.4 -17 C-3.2 -22 -3.4 -27 -2.4 -31 Z" />
+                    <path d="M-1 -34 L1.6 -34 L1.4 -31 L-1 -31 Z" />
+                    <circle cx="0" cy="-37" r="4.3" />
+                    <path d="M4 -37.6 L6.4 -35.8 L4.2 -34.8 Z" />
+                    <path d="M-3 -40.5 C-1 -43 4 -42.5 4.4 -38.5 C2.5 -40.5 -0.5 -40.5 -2.5 -38.5 C-8 -39 -13 -33 -16 -27 C-18 -22 -22 -19 -27 -18 C-21 -15 -16 -17 -13 -22 C-11 -26 -9 -30 -4 -34 Z" />
+                    <path d="M-6 -36 C-12 -37 -18 -33 -22 -34 C-17 -31 -11 -31 -6 -33 Z" />
                   </g>
-                  <g transform="translate(1 -23)">
+                  <g transform="translate(1 -29)">
                     <g className="wand">
-                      <g transform="translate(-1 23)" stroke="#fff" strokeLinecap="round" fill="none">
-                        <path d="M1 -23 C6 -23 10 -27 13 -33" strokeWidth="1.8" />
-                        <path d="M13 -33 L22 -45" strokeWidth="0.9" />
-                        <path d="M0 -22 C4 -19 8 -19 10 -22" strokeWidth="1.5" />
-                        <g transform="translate(23 -46) scale(0.9)" stroke="none">
+                      <g transform="translate(-1 29)" stroke="#fff" strokeLinecap="round" fill="none">
+                        <path d="M1 -29 C6 -29 11 -33 14 -39" strokeWidth="1.7" />
+                        <path d="M14 -39 L23 -51" strokeWidth="0.9" />
+                        <path d="M0 -28 C3 -23 8 -21 11 -23" strokeWidth="1.6" />
+                        <g transform="translate(24 -52) scale(0.9)" stroke="none">
                           <use href="#hk-star" className="tw-loop" />
                         </g>
                       </g>
