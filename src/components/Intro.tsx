@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
-// Eröffnungsanimation: Eine kleine Fee fliegt über den Bildschirm, danach
-// erscheint das Logo. Läuft nur einmal pro Besuch und lässt sich wegklicken.
+// Eröffnungsanimation: Eine kleine Fee fliegt herein, zaubert das Logo herbei
+// und fliegt wieder davon. Läuft nur einmal pro Besuch und lässt sich wegklicken.
 // Bei "weniger Bewegung" in den Geräte-Einstellungen wird sie nicht gezeigt.
 
 const KEY = 'hikaya-intro';
-const HOLD_MS = 4400; // so lange bleibt die Animation, bevor sie ausblendet
+const HOLD_MS = 5800; // so lange bleibt die Animation, bevor sie ausblendet
 const FADE_MS = 900;
 
 export default function Intro({ tagline, skipLabel }: { tagline: string; skipLabel: string }) {
@@ -63,10 +63,7 @@ export default function Intro({ tagline, skipLabel }: { tagline: string; skipLab
             <stop offset="1" stopColor="#fff" stopOpacity="0" />
           </radialGradient>
           <path id="hk-star" d="M0 -8 L2 -2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2 -2 Z" fill="#fff" />
-          <path
-            id="hk-flight"
-            d="M -60 440 C 150 470, 180 230, 300 250 C 420 270, 470 380, 560 300 C 640 230, 600 120, 520 100"
-          />
+          <path id="hk-flight" d="M -90 90 C 40 30, 110 330, 250 270" />
         </defs>
 
         {/* Logo, Schriftzug, Slogan */}
@@ -78,53 +75,83 @@ export default function Intro({ tagline, skipLabel }: { tagline: string; skipLab
           {tagline}
         </text>
 
-        {/* Funkeln um das Logo, wenn die Fee ankommt */}
+        {/* Lichtblitz und Funkeln, wenn das Logo herbeigezaubert wird */}
+        <circle cx="400" cy="160" r="12" fill="#fff" className="flash" />
         {[
-          [318, 92, 2.7],
-          [488, 66, 2.9],
-          [510, 232, 3.1],
-          [292, 214, 3.3],
-          [540, 140, 3.5],
+          [318, 92, 2.5],
+          [488, 66, 2.6],
+          [510, 232, 2.7],
+          [292, 214, 2.8],
+          [540, 140, 2.9],
+          [400, 40, 2.6],
+          [270, 150, 2.75],
+          [350, 262, 3.0],
         ].map(([x, y, delay]) => (
           <g key={`${x}-${y}`} transform={`translate(${x} ${y})`}>
             <use href="#hk-star" className="tw" style={{ animationDelay: `${delay}s` }} />
           </g>
         ))}
 
-        {/* Funkenspur hinter der Fee */}
-        {[0.12, 0.24, 0.36, 0.48, 0.6, 0.72].map((d, i) => (
+        {/* Funkenspur beim Hereinfliegen */}
+        {[0.12, 0.26, 0.4, 0.54, 0.68].map((d, i) => (
           <g key={d} opacity="0">
-            <use href="#hk-star" transform={`scale(${0.9 - i * 0.11})`} />
-            <animateMotion dur="3s" begin={`${d}s`} fill="freeze">
+            <use href="#hk-star" transform={`scale(${0.9 - i * 0.12})`} />
+            <animateMotion dur="2.2s" begin={`${d}s`} fill="freeze">
               <mpath href="#hk-flight" />
             </animateMotion>
             <animate
               attributeName="opacity"
               values="0;0.9;0.9;0"
-              keyTimes="0;0.1;0.8;1"
-              dur="3s"
+              keyTimes="0;0.1;0.7;1"
+              dur="2.2s"
               begin={`${d}s`}
               fill="freeze"
             />
           </g>
         ))}
 
-        {/* Die Fee */}
+        {/* Die Fee: fliegt herein, schwebt, zaubert, fliegt wieder davon */}
         <g>
-          <animateMotion dur="3s" begin="0s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.4 0 0.2 1">
+          <animateMotion dur="2.2s" begin="0s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1">
             <mpath href="#hk-flight" />
           </animateMotion>
-          <circle r="34" fill="url(#hk-glow)" />
-          <g className="wings" fill="#fff" fillOpacity="0.7" stroke="#fff" strokeOpacity="0.9" strokeWidth="0.8">
-            <path d="M0 -4 C-16 -22 -26 -14 -18 0 C-14 8 -4 6 0 0 Z" />
-            <path d="M0 -4 C16 -22 26 -14 18 0 C14 8 4 6 0 0 Z" />
-            <path d="M0 1 C-10 4 -16 16 -10 20 C-4 22 0 10 0 1 Z" />
-            <path d="M0 1 C10 4 16 16 10 20 C4 22 0 10 0 1 Z" />
-          </g>
-          <path d="M0 -6 C-3 0 -6 10 -8 16 L8 16 C6 10 3 0 0 -6 Z" fill="#fff" />
-          <circle cx="0" cy="-10" r="4" fill="#fff" />
-          <g transform="translate(13 5) scale(0.7)">
-            <use href="#hk-star" className="tw-loop" />
+          <g>
+            <animateMotion
+              dur="1.6s"
+              begin="3.2s"
+              fill="freeze"
+              calcMode="spline"
+              keyTimes="0;1"
+              keySplines="0.5 0 0.9 0.6"
+              path="M0 0 C 170 110, 450 -10, 700 -230"
+            />
+            <g className="bob">
+              <g transform="scale(1.15)">
+                <circle r="44" fill="url(#hk-glow)" />
+                <g transform="translate(0 -9)">
+                  <g className="wings" fill="#fff" fillOpacity="0.55" stroke="#fff" strokeOpacity="0.95" strokeWidth="0.7">
+                    <path d="M0 9 C-4 -7 -14 -21 -26 -21 C-34 -19 -28 -3 0 9 Z" />
+                    <path d="M0 11 C-12 5 -30 3 -34 13 C-34 21 -14 19 0 11 Z" />
+                    <path d="M0 12 C-8 17 -18 27 -14 33 C-8 35 -2 23 0 12 Z" />
+                  </g>
+                </g>
+                <g fill="#fff">
+                  <circle cx="-2" cy="-24" r="3.4" />
+                  <circle cx="3" cy="-19" r="5" />
+                  <path d="M-1 -15 L7 -15 C8 -8 7 -3 6 0 L-1 0 C-2 -4 -2 -10 -1 -15 Z" />
+                  <path d="M-1 -1 C-12 6 -16 16 -19 22 C-15 25 -12 21 -9 24 C-6 26 -3 22 0 25 C3 23 6 25 8 22 C9 14 9 6 7 -1 Z" />
+                  <path d="M-2 24 C-6 30 -10 34 -16 36 L-15 38 C-8 37 -3 33 1 25 Z" />
+                  <path d="M4 24 C5 31 4 37 1 42 L4 43 C8 38 9 31 8 24 Z" />
+                </g>
+                <g className="wand">
+                  <path d="M5 -12 C12 -8 20 -9 25 -16" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+                  <path d="M25 -16 L39 -30" stroke="#fff" strokeWidth="1" strokeLinecap="round" />
+                  <g transform="translate(40 -31) scale(0.9)">
+                    <use href="#hk-star" className="tw-loop" />
+                  </g>
+                </g>
+              </g>
+            </g>
           </g>
         </g>
       </svg>
