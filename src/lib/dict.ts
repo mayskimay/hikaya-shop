@@ -5,16 +5,11 @@ const de = {
   tagline: 'Mode mit einer Geschichte',
   nav: {
     shop: 'Shop',
+    new: 'Neuheiten',
     bestsellers: 'Bestseller',
     sale: 'Sale',
     cart: 'Warenkorb',
     menu: 'Menü',
-  },
-  categories: {
-    outerwear: 'Outerwear',
-    bottoms: 'Unterteile',
-    sets: 'Kostüme & Sets',
-    dresses: 'Kleider',
   },
   home: {
     heroTitle: 'Jedes Stück erzählt eine Geschichte',
@@ -23,6 +18,18 @@ const de = {
     heroCta: 'Kollektion entdecken',
     categoriesTitle: 'Kategorien',
     bestsellersTitle: 'Bestseller',
+    newTitle: 'Neuheiten',
+    saleTitle: 'Sale',
+    viewAll: 'Alle ansehen',
+    storyTitle: 'Eine kleine Welt für sich',
+    storyText:
+      'Hikaya bedeutet „Märchen“. Jedes Stück soll sich anfühlen wie ein Kapitel einer leisen, eleganten Geschichte.',
+    storyCta: 'Mehr über Hikaya',
+    contactTitle: 'Bleib in Kontakt',
+    contactText:
+      'Fragen zu Größen, Bestellungen oder Styling? Wir freuen uns auf deine Nachricht.',
+    contactCta: 'Kontakt aufnehmen',
+    followUs: 'Folge uns',
   },
   shop: {
     title: 'Shop',
@@ -77,16 +84,11 @@ const en: Dict = {
   tagline: 'Fashion with a story',
   nav: {
     shop: 'Shop',
+    new: 'New arrivals',
     bestsellers: 'Bestsellers',
     sale: 'Sale',
     cart: 'Cart',
     menu: 'Menu',
-  },
-  categories: {
-    outerwear: 'Outerwear',
-    bottoms: 'Bottoms',
-    sets: 'Suits & Sets',
-    dresses: 'Dresses',
   },
   home: {
     heroTitle: 'Every piece tells a story',
@@ -95,6 +97,18 @@ const en: Dict = {
     heroCta: 'Discover the collection',
     categoriesTitle: 'Categories',
     bestsellersTitle: 'Bestsellers',
+    newTitle: 'New arrivals',
+    saleTitle: 'Sale',
+    viewAll: 'View all',
+    storyTitle: 'A little world of its own',
+    storyText:
+      'Hikaya means “fairytale”. Every piece should feel like a chapter of a quiet, elegant story.',
+    storyCta: 'More about Hikaya',
+    contactTitle: 'Stay in touch',
+    contactText:
+      'Questions about sizing, orders or styling? We would love to hear from you.',
+    contactCta: 'Get in touch',
+    followUs: 'Follow us',
   },
   shop: {
     title: 'Shop',

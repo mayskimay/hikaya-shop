@@ -28,7 +28,8 @@ export default function Header({ locale, t }: { locale: Locale; t: Dict['nav'] }
 
         <nav className={open ? 'nav open' : 'nav'} onClick={() => setOpen(false)}>
           <Link href={`/${locale}/shop`}>{t.shop}</Link>
-          <Link href={`/${locale}/shop?category=bestsellers`}>{t.bestsellers}</Link>
+          <Link href={`/${locale}/shop?category=new`}>{t.new}</Link>
+          <Link href={`/${locale}/shop?category=best`}>{t.bestsellers}</Link>
           <Link href={`/${locale}/shop?category=sale`}>{t.sale}</Link>
         </nav>
 

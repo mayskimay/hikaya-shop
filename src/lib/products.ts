@@ -3,9 +3,6 @@ import type { Locale } from './i18n';
 // Später kommen diese Daten aus dem CMS (z. B. Sanity).
 // Die Struktur ist so gewählt, dass der Wechsel einfach bleibt.
 
-export type CategoryId = 'outerwear' | 'bottoms' | 'sets' | 'dresses';
-export const categoryIds: CategoryId[] = ['outerwear', 'bottoms', 'sets', 'dresses'];
-
 type L = Record<Locale, string>;
 
 export interface Product {
@@ -13,10 +10,12 @@ export interface Product {
   name: L;
   description: L;
   material: L;
-  category: CategoryId;
+  category: string; // id aus categories.ts
+  sub?: string; // Unterkategorie, id aus categories.ts
   price: number;
   salePrice?: number;
   bestseller?: boolean;
+  isNew?: boolean;
   colors: { name: L; hex: string }[];
   sizes: string[];
   stock: number;
@@ -33,6 +32,7 @@ export const products: Product[] = [
     },
     material: { de: '100 % Viskose', en: '100% viscose' },
     category: 'outerwear',
+    sub: 'kimono',
     price: 89,
     bestseller: true,
     colors: [
@@ -52,6 +52,7 @@ export const products: Product[] = [
     },
     material: { de: '95 % Baumwolle, 5 % Elastan', en: '95% cotton, 5% elastane' },
     category: 'bottoms',
+    sub: 'balloon-skirts',
     price: 59,
     salePrice: 44,
     colors: [{ name: { de: 'Salbei', en: 'Sage' }, hex: '#a9b8a0' }],
@@ -68,7 +69,9 @@ export const products: Product[] = [
     },
     material: { de: '100 % Baumwolle', en: '100% cotton' },
     category: 'bottoms',
+    sub: 'denim-skirts',
     price: 69,
+    isNew: true,
     colors: [{ name: { de: 'Blau', en: 'Blue' }, hex: '#6f85a3' }],
     sizes: ['S', 'M', 'L', 'XL'],
     stock: 15,
@@ -83,6 +86,7 @@ export const products: Product[] = [
     },
     material: { de: '70 % Polyester, 30 % Viskose', en: '70% polyester, 30% viscose' },
     category: 'sets',
+    sub: 'three-piece',
     price: 149,
     bestseller: true,
     colors: [
@@ -102,7 +106,9 @@ export const products: Product[] = [
     },
     material: { de: '100 % Viskose', en: '100% viscose' },
     category: 'dresses',
+    sub: 'mini-dresses',
     price: 79,
+    isNew: true,
     colors: [{ name: { de: 'Altrosa', en: 'Dusty rose' }, hex: '#d9b3ab' }],
     sizes: ['XS', 'S', 'M'],
     stock: 10,
@@ -124,4 +130,15 @@ export function getProduct(slug: string): Product | undefined {
 
 export function currentPrice(p: Product): number {
   return p.salePrice ?? p.price;
+}
+
+// category: eine Hauptkategorie-id oder 'new' | 'best' | 'sale'
+export function filterProducts(category?: string, sub?: string): Product[] {
+  if (category === 'new') return products.filter((p) => p.isNew);
+  if (category === 'best') return products.filter((p) => p.bestseller);
+  if (category === 'sale') return products.filter((p) => p.salePrice !== undefined);
+  let list = products;
+  if (category) list = list.filter((p) => p.category === category);
+  if (sub) list = list.filter((p) => p.sub === sub);
+  return list;
 }
