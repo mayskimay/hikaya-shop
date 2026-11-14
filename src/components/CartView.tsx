@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/lib/cart';
 import { formatPrice, type Locale } from '@/lib/i18n';
@@ -16,6 +17,31 @@ export default function CartView({
   products: Product[];
 }) {
   const { items, remove } = useCart();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  async function checkout() {
+    setBusy(true);
+    setError('');
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale, items }),
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      if (data.error === 'not_configured') setError(t.errNotConfigured);
+      else if (data.error === 'stock') setError(`${t.errStock} ${data.name}`);
+      else setError(t.errGeneric);
+    } catch {
+      setError(t.errGeneric);
+    }
+    setBusy(false);
+  }
 
   const rows = items
     .map((item) => ({ item, product: products.find((p) => p.slug === item.slug) }))
@@ -65,9 +91,10 @@ export default function CartView({
         <strong>{formatPrice(total, locale)}</strong>
       </div>
 
-      <button className="btn" disabled>
-        {t.checkout}
+      <button className="btn" onClick={checkout} disabled={busy}>
+        {busy ? t.redirecting : t.checkout}
       </button>
+      {error && <p className="note" role="alert" style={{ color: 'var(--sale)' }}>{error}</p>}
       <p className="note">{t.checkoutNote}</p>
     </>
   );

@@ -61,3 +61,16 @@ Wichtig: Sobald das CMS verbunden ist, werden die Beispielprodukte nicht mehr an
 3. Echte Texte für Über uns, Versand, Zahlung, Rückgabe
 4. Rechtliche Texte (Datenschutz, AGB, Impressum, Widerruf) – aktuell Platzhalter, müssen rechtssicher erstellt werden
 5. Hero-Foto, Domain
+6. Webhook für Bestand und Bestell-E-Mail nach der Zahlung
+
+## Zahlung einrichten (Stripe)
+
+Die Kasse leitet zu Stripe Checkout weiter. Zahlungsmethoden (Karte, Apple Pay, Google Pay, PayPal, Klarna, EPS usw.) werden im Stripe-Dashboard unter *Einstellungen → Zahlungsmethoden* aktiviert.
+
+1. Konto auf [stripe.com](https://stripe.com) anlegen (die Inhaberin selbst, mit Firmen- und Bankdaten).
+2. Im Dashboard den **Testmodus** wählen und unter *Entwickler → API-Schlüssel* den **geheimen Schlüssel** (`sk_test_…`) kopieren.
+3. Bei Vercel unter *Settings → Environment Variables* anlegen: `STRIPE_SECRET_KEY` = der Schlüssel. Danach neu ausliefern ("Redeploy").
+4. Mit der Testkarte `4242 4242 4242 4242` (beliebiges Ablaufdatum in der Zukunft, beliebiger Code) eine Bestellung durchspielen.
+5. Zum Start auf den Live-Modus wechseln und den Schlüssel `sk_live_…` eintragen.
+
+Versandländer und Versandkosten stehen in `src/lib/shop.ts`.

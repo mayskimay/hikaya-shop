@@ -54,8 +54,17 @@ const de = {
     total: 'Gesamt',
     checkout: 'Zur Kasse',
     checkoutNote:
-      'Die Zahlung (Stripe) wird im nächsten Schritt angebunden.',
+      'Sichere Zahlung über Stripe: Karte, Apple Pay, PayPal und mehr. Der Versand wird an der Kasse berechnet.',
     continue: 'Weiter einkaufen',
+    redirecting: 'Weiterleitung …',
+    errNotConfigured: 'Die Zahlung ist noch nicht eingerichtet.',
+    errStock: 'Leider nicht mehr in dieser Menge verfügbar:',
+    errGeneric: 'Etwas ist schiefgelaufen. Bitte versuche es noch einmal.',
+  },
+  checkout: {
+    successTitle: 'Vielen Dank für deine Bestellung',
+    successText: 'Deine Zahlung ist eingegangen. Du erhältst eine Bestätigung per E-Mail von unserem Zahlungsdienst.',
+    back: 'Weiter einkaufen',
   },
   footer: {
     about: 'Über uns',
@@ -133,8 +142,17 @@ const en: Dict = {
     remove: 'Remove',
     total: 'Total',
     checkout: 'Checkout',
-    checkoutNote: 'Payment (Stripe) will be connected in the next step.',
+    checkoutNote: 'Secure payment via Stripe: card, Apple Pay, PayPal and more. Shipping is calculated at checkout.',
     continue: 'Continue shopping',
+    redirecting: 'Redirecting …',
+    errNotConfigured: 'Payment has not been set up yet.',
+    errStock: 'No longer available in this quantity:',
+    errGeneric: 'Something went wrong. Please try again.',
+  },
+  checkout: {
+    successTitle: 'Thank you for your order',
+    successText: 'Your payment has been received. You will get a confirmation email from our payment provider.',
+    back: 'Continue shopping',
   },
   footer: {
     about: 'About us',
