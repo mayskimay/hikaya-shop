@@ -1,7 +1,8 @@
-// Einstellungen für Kasse, Versand und Shop-Angaben. Beträge in Euro.
+// STARTWERTE für Kasse, Versand und Shop-Angaben. Beträge in Euro.
 //
-// ⚠️ ALLE WERTE HIER SIND PLATZHALTER und müssen von der Inhaberin festgelegt
-//    bzw. rechtlich geprüft werden, bevor echte Bestellungen angenommen werden.
+// Die Inhaberin ändert diese Angaben im Verwaltungsbereich (/admin → Versand, Shop-Infos).
+// Die Werte hier gelten nur, solange dort noch nichts gespeichert ist (siehe src/lib/settings.ts).
+// ⚠️ ALLE WERTE HIER SIND PLATZHALTER und müssen festgelegt bzw. rechtlich geprüft werden.
 
 import type { Locale } from './i18n';
 
@@ -99,20 +100,6 @@ export const shop = {
     trade: '[Gewerbe, z. B. Handelsgewerbe]',
   },
 };
-
-export const allShippingCountries = shop.shippingZones.flatMap((z) => z.countries);
-
-export function zoneForCountry(country: string): ShippingZone | undefined {
-  return shop.shippingZones.find((z) => z.countries.includes(country));
-}
-
-// Versandkosten in Euro für ein Land und einen Warenwert (in Euro)
-export function shippingCost(country: string, subtotal: number): number | undefined {
-  const zone = zoneForCountry(country);
-  if (!zone) return undefined;
-  if (zone.freeFrom !== undefined && subtotal >= zone.freeFrom) return 0;
-  return zone.amount;
-}
 
 // Ländernamen für die Auswahl im Warenkorb
 export function countryName(code: string, locale: Locale): string {

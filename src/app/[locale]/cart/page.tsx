@@ -1,8 +1,8 @@
-import { getDict } from '@/lib/dict';
 import { getProducts } from '@/lib/data';
 import { isLocale, defaultLocale } from '@/lib/i18n';
 import { stripeMode } from '@/lib/stripe';
-import { dhlLiveForCustomers } from '@/lib/providers';
+import { dhlLive } from '@/lib/providers';
+import { getShopConfig, getTexts } from '@/lib/settings';
 import CartView from '@/components/CartView';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,8 @@ export default async function CartPage({
 }) {
   const { locale: raw } = await params;
   const locale = isLocale(raw) ? raw : defaultLocale;
-  const t = getDict(locale);
+  const cfg = await getShopConfig();
+  const t = await getTexts(locale, cfg);
   const products = await getProducts();
   // Nur die Information "Testmodus ja/nein" geht an den Browser – nie der Schlüssel selbst
   const mode = stripeMode();
@@ -28,7 +29,11 @@ export default async function CartPage({
         products={products}
         paymentReady={mode !== null}
         testMode={mode === 'test'}
-        carrierLive={dhlLiveForCustomers()}
+        carrierLive={dhlLive(cfg)}
+        zones={cfg.zones}
+        vatNote={cfg.vatNote[locale]}
+        packagingNote={cfg.packagingNote[locale]}
+        maxQty={cfg.maxQtyPerItem}
       />
     </div>
   );

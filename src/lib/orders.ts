@@ -69,7 +69,7 @@ export function orderNumberFor(sessionId: string, created: number): string {
   return `HK-${ymd}-${sessionId.slice(-6).toUpperCase()}`;
 }
 
-async function sanityQuery<T>(groq: string, params: Record<string, unknown> = {}): Promise<T> {
+export async function sanityQuery<T>(groq: string, params: Record<string, unknown> = {}): Promise<T> {
   const qs = new URLSearchParams({ query: groq });
   for (const [k, v] of Object.entries(params)) qs.set(`$${k}`, JSON.stringify(v));
   const res = await fetch(`https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?${qs}`, {
@@ -80,7 +80,7 @@ async function sanityQuery<T>(groq: string, params: Record<string, unknown> = {}
   return ((await res.json()) as { result: T }).result;
 }
 
-async function sanityMutate(mutations: unknown[]): Promise<void> {
+export async function sanityMutate(mutations: unknown[]): Promise<void> {
   const res = await fetch(
     `https://${projectId}.api.sanity.io/v${apiVersion}/data/mutate/${dataset}?visibility=sync`,
     {
@@ -272,4 +272,62 @@ export async function markRefunded(paymentIntent: string, full: boolean, refunde
     },
   ]);
   return id;
+}
+
+// ---------- Statusänderungen von Hand (Verwaltung → Bestellungen) ----------
+// Zahlungsstatus (bezahlt, erstattet) setzt nur Stripe. Von Hand sind nur diese Schritte erlaubt:
+export const MANUAL_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  awaiting_payment: ['cancelled'],
+  payment_failed: ['cancelled'],
+  paid: ['cancelled'],
+  shipped: ['delivered'],
+};
+
+export function canChangeStatus(from: OrderStatus, to: OrderStatus): boolean {
+  return MANUAL_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+export interface AdminOrder extends ShippingOrder {
+  stockAdjusted?: boolean;
+  stockRestored?: boolean;
+  refundedAmount?: number;
+}
+
+export async function listAllOrders(limit = 300): Promise<AdminOrder[]> {
+  if (!canStoreOrders()) return [];
+  return sanityQuery<AdminOrder[]>(
+    `*[_type == "order"] | order(createdAt desc)[0...$limit]{ ${ORDER_FIELDS}, stockAdjusted, stockRestored, refundedAmount }`,
+    { limit }
+  );
+}
+
+// Status von Hand ändern. Wird eine bezahlte Bestellung storniert, kommt der Bestand einmalig zurück.
+export async function changeStatusManually(orderNumber: string, to: OrderStatus): Promise<{ ok: boolean; error?: string; restocked?: boolean }> {
+  if (!canStoreOrders()) return { ok: false, error: 'Bestellungen können nicht gespeichert werden (Sanity fehlt).' };
+  const id = orderDocId(orderNumber);
+  const o = await sanityQuery<{ status: OrderStatus; items: OrderItem[]; stockAdjusted?: boolean; stockRestored?: boolean } | null>(
+    `*[_id == $id][0]{ status, items, stockAdjusted, stockRestored }`,
+    { id }
+  );
+  if (!o) return { ok: false, error: 'Bestellung nicht gefunden' };
+  if (!canChangeStatus(o.status, to)) return { ok: false, error: 'Diese Statusänderung ist nicht erlaubt.' };
+  const now = new Date().toISOString();
+  const set: Record<string, unknown> = { status: to };
+  if (to === 'cancelled') set.cancelledAt = now;
+  if (to === 'delivered') set.deliveredAt = now;
+  const mutations: unknown[] = [{ patch: { id, set } }];
+  let restocked = false;
+  if (to === 'cancelled' && o.stockAdjusted && !o.stockRestored) {
+    restocked = true;
+    set.stockRestored = true;
+    const qtyBySlug = new Map<string, number>();
+    for (const it of o.items ?? []) qtyBySlug.set(it.slug, (qtyBySlug.get(it.slug) ?? 0) + it.quantity);
+    const ids = await sanityQuery<{ _id: string; slug: string }[]>(
+      `*[_type == "product" && slug.current in $slugs && !(_id in path("drafts.**"))]{ _id, "slug": slug.current }`,
+      { slugs: [...qtyBySlug.keys()] }
+    );
+    for (const p of ids) mutations.push({ patch: { id: p._id, inc: { stock: qtyBySlug.get(p.slug) ?? 0 } } });
+  }
+  await sanityMutate(mutations);
+  return { ok: true, restocked };
 }

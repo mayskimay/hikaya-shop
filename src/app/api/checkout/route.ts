@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getProducts } from '@/lib/data';
 import { currentPrice } from '@/lib/products';
-import { allShippingCountries, shippingCost, shop, zoneForCountry } from '@/lib/shop';
+import { getShopConfig, shippingFor, zoneFor } from '@/lib/settings';
 import { isLocale, defaultLocale } from '@/lib/i18n';
 import { getStripeConfig, stripeRequest } from '@/lib/stripe';
-import { dhlLiveForCustomers } from '@/lib/providers';
+import { dhlLive } from '@/lib/providers';
 
 // Legt bei Stripe eine Checkout-Sitzung an und gibt die Adresse der Zahlungsseite zurück.
 // - Preise, Bestand und Versandkosten werden hier neu berechnet, nie vom Browser übernommen.
@@ -39,9 +39,11 @@ export async function POST(req: Request) {
   if (items.length === 0) return NextResponse.json({ error: 'empty' }, { status: 400 });
   if (body.acceptedTerms !== true) return NextResponse.json({ error: 'terms' }, { status: 400 });
 
+  // Versandzonen und -kosten frisch aus den Einstellungen, nie vom Browser übernommen
+  const settings = await getShopConfig({ fresh: true });
   const country = String(body.country ?? '').toUpperCase();
-  const zone = zoneForCountry(country);
-  if (!zone || !allShippingCountries.includes(country)) {
+  const zone = zoneFor(settings, country);
+  if (!zone) {
     return NextResponse.json({ error: 'country' }, { status: 400 });
   }
 
@@ -56,7 +58,7 @@ export async function POST(req: Request) {
     const p = products.find((x) => x.slug === it.slug);
     const color = p?.colors.find((c) => c.hex === it.color);
     const qty = Math.floor(Number(it.qty));
-    if (!p || !color || !p.sizes.includes(it.size) || !(qty >= 1 && qty <= shop.maxQtyPerItem)) {
+    if (!p || !color || !p.sizes.includes(it.size) || !(qty >= 1 && qty <= settings.maxQtyPerItem)) {
       return NextResponse.json({ error: 'invalid_item' }, { status: 400 });
     }
     const totalForProduct = (qtyBySlug.get(p.slug) ?? 0) + qty;
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
     subtotalCents += unit * qty;
     const pre = `line_items[${i}]`;
     params.set(`${pre}[quantity]`, String(qty));
-    params.set(`${pre}[price_data][currency]`, shop.currency);
+    params.set(`${pre}[price_data][currency]`, settings.currency);
     params.set(`${pre}[price_data][unit_amount]`, String(unit));
     params.set(`${pre}[price_data][product_data][name]`, p.name[locale]);
     params.set(`${pre}[price_data][product_data][description]`, `${it.size} · ${color.name[locale]}`);
@@ -99,13 +101,13 @@ export async function POST(req: Request) {
   // Lieferland wurde im Warenkorb gewählt – nur dieses Land zulassen, damit die Versandkosten stimmen
   params.set('shipping_address_collection[allowed_countries][0]', country);
 
-  const shippingEuro = shippingCost(country, subtotalCents / 100) ?? zone.amount;
+  const shippingEuro = shippingFor(zone, subtotalCents / 100) ?? zone.amount;
   const sp = 'shipping_options[0][shipping_rate_data]';
   params.set(`${sp}[type]`, 'fixed_amount');
-  const carrierName = dhlLiveForCustomers() ? zone.carrier : locale === 'de' ? 'Standardversand' : 'Standard shipping';
+  const carrierName = zone.carrier === 'dhl-express' && dhlLive(settings) ? 'DHL Express' : locale === 'de' ? 'Standardversand' : 'Standard shipping';
   params.set(`${sp}[display_name]`, `${carrierName} – ${zone.label[locale]} (${zone.delivery[locale]})`.slice(0, 100));
   params.set(`${sp}[fixed_amount][amount]`, String(Math.round(shippingEuro * 100)));
-  params.set(`${sp}[fixed_amount][currency]`, shop.currency);
+  params.set(`${sp}[fixed_amount][currency]`, settings.currency);
 
   // Hinweis direkt über dem Bezahl-Knopf auf der Stripe-Seite
   params.set(

@@ -6,7 +6,8 @@ import { useCart } from '@/lib/cart';
 import { formatPrice, type Locale } from '@/lib/i18n';
 import type { Dict } from '@/lib/dict';
 import { currentPrice, type Product } from '@/lib/products';
-import { shop, shippingCost, zoneForCountry, countryName } from '@/lib/shop';
+import { countryName } from '@/lib/shop';
+import type { Zone } from '@/lib/settings';
 
 const COUNTRY_KEY = 'hikaya-country';
 
@@ -17,14 +18,23 @@ export default function CartView({
   paymentReady,
   testMode,
   carrierLive,
+  zones,
+  vatNote,
+  packagingNote,
+  maxQty,
 }: {
   locale: Locale;
   t: Dict['cart'];
   products: Product[];
   paymentReady: boolean;
   testMode: boolean;
-  carrierLive: boolean; // Versanddienst nur nennen, wenn er wirklich verbunden ist
+  carrierLive: boolean; // DHL Express nur nennen, wenn es wirklich verbunden ist
+  zones: Zone[]; // Versandzonen aus /admin → Versand
+  vatNote: string;
+  packagingNote: string;
+  maxQty: number;
 }) {
+  const zoneForCountry = (c: string) => zones.find((z) => z.countries.includes(c));
   const { items, remove, setQty } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -89,8 +99,9 @@ export default function CartView({
 
   const subtotal = rows.reduce((sum, { item, product }) => sum + currentPrice(product!) * item.qty, 0);
   const zone = zoneForCountry(country);
-  const ship = shippingCost(country, subtotal) ?? 0;
-  const countries = shop.shippingZones
+  const ship = zone ? (zone.freeFrom !== undefined && subtotal >= zone.freeFrom ? 0 : zone.amount) : 0;
+  const showCarrier = carrierLive && zone?.carrier === 'dhl-express';
+  const countries = zones
     .flatMap((z) => z.countries)
     .map((c) => ({ code: c, name: countryName(c, locale) }))
     .sort((a, b) => (a.code === 'AT' ? -1 : b.code === 'AT' ? 1 : a.name.localeCompare(b.name, locale)));
@@ -101,7 +112,7 @@ export default function CartView({
 
       {rows.map(({ item, product }) => {
         const color = product!.colors.find((c) => c.hex === item.color);
-        const max = Math.min(shop.maxQtyPerItem, product!.stock);
+        const max = Math.min(maxQty, product!.stock);
         return (
           <div className="cart-row" key={`${item.slug}-${item.size}-${item.color}`}>
             <div>
@@ -150,7 +161,7 @@ export default function CartView({
           </select>
           {zone && (
             <small className="note">
-              {carrierLive && `${t.carrier}: ${zone.carrier} · `}{t.delivery}: {zone.delivery[locale]}
+              {showCarrier && `${t.carrier}: DHL Express · `}{t.delivery}: {zone.delivery[locale]}
               {zone.freeFrom !== undefined && ` · ${t.freeFrom} ${formatPrice(zone.freeFrom, locale)}`}
             </small>
           )}
@@ -168,8 +179,8 @@ export default function CartView({
           <span>{t.total}</span>
           <strong>{formatPrice(subtotal + ship, locale)}</strong>
         </div>
-        <p className="note">{shop.vatNote[locale]}</p>
-        <p className="note">{shop.packagingNote[locale]}</p>
+        <p className="note">{vatNote}</p>
+        <p className="note">{packagingNote}</p>
 
         <label className="check">
           <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />

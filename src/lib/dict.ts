@@ -102,7 +102,7 @@ const de = {
   },
   info: {
     about: { title: 'Über uns', body: 'Hier steht später die Geschichte von Hikaya.' },
-    shipping: { title: 'Versand', body: 'Versandkosten und Lieferzeiten je Land (Platzhalter – Werte in src/lib/shop.ts festlegen):' },
+    shipping: { title: 'Versand', body: 'Versandkosten und Lieferzeiten je Land:' },
     payment: { title: 'Zahlung', body: 'Die Zahlung erfolgt sicher über unseren Zahlungsanbieter Stripe. Karten- und Bankdaten werden nicht von uns gespeichert. Welche Zahlungsarten für dein Land und deinen Bestellbetrag verfügbar sind, siehst du auf der Zahlungsseite.' },
     returns: { title: 'Rückgabe & Widerruf', body: 'Platzhalter. Hier stehen später die Widerrufsbelehrung (14 Tage), das Muster-Widerrufsformular und die Umtauschbedingungen. Diese Texte müssen rechtlich geprüft werden.' },
     contact: { title: 'Kontakt', body: 'Hier kommt später das Kontaktformular hin.' },
@@ -216,7 +216,7 @@ const en: Dict = {
   },
   info: {
     about: { title: 'About us', body: 'The story of Hikaya will be added here.' },
-    shipping: { title: 'Shipping', body: 'Shipping costs and delivery times by country (placeholder – set the values in src/lib/shop.ts):' },
+    shipping: { title: 'Shipping', body: 'Shipping costs and delivery times by country:' },
     payment: { title: 'Payment', body: 'Payment is processed securely by our provider Stripe. We do not store card or bank details. The payment methods available for your country and order amount are shown on the payment page.' },
     returns: { title: 'Returns & withdrawal', body: 'Placeholder. The withdrawal policy (14 days), model withdrawal form and exchange conditions will be added here. These texts must be legally reviewed.' },
     contact: { title: 'Contact', body: 'The contact form will be added here.' },

@@ -109,6 +109,8 @@ export const order = defineType({
     defineField({ name: 'stripeSessionId', title: 'Stripe-Sitzung', type: 'string', ...ro }),
     defineField({ name: 'stripePaymentIntent', title: 'Stripe-Zahlung', type: 'string', ...ro }),
     defineField({ name: 'stockAdjusted', title: 'Bestand abgebucht', type: 'boolean', ...ro }),
+    defineField({ name: 'stockRestored', title: 'Bestand nach Storno zurückgebucht', type: 'boolean', ...ro }),
+    defineField({ name: 'cancelledAt', title: 'Storniert am', type: 'datetime', ...ro }),
   ],
   orderings: [{ title: 'Neueste zuerst', name: 'newest', by: [{ field: 'createdAt', direction: 'desc' }] }],
   preview: {

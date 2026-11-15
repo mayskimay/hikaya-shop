@@ -1,30 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminConfigured, isAdminAuthorized } from '@/lib/adminAuth';
+import { adminConfigured, readCookie, verifySessionToken } from '@/lib/adminAuth';
 
 const locales = ['de', 'en'];
 const defaultLocale = 'de';
 
-export function middleware(request: NextRequest) {
+// Ohne Anmeldung erreichbar: die Login-Seite selbst und das Absenden des Formulars
+const PUBLIC_ADMIN = ['/admin/login', '/admin/api/login'];
+
+function noStore(res: NextResponse) {
+  res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  res.headers.set('Cache-Control', 'no-store');
+  res.headers.set('X-Frame-Options', 'DENY');
+  res.headers.set('Referrer-Policy', 'same-origin');
+  return res;
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Versand-Seite der Inhaberin: nur mit Passwort
-  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
-    if (!adminConfigured()) {
-      return new NextResponse(
-        'Die Versand-Seite ist noch nicht eingerichtet: ADMIN_USER und ADMIN_PASSWORD (mind. 12 Zeichen) bei Vercel eintragen.',
-        { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
-      );
+  // Verwaltungsbereich und CMS: nur mit gültiger Anmeldung
+  const isAdmin = pathname === '/admin' || pathname.startsWith('/admin/');
+  const isStudio = pathname === '/studio' || pathname.startsWith('/studio/');
+  if (isAdmin || isStudio) {
+    if (PUBLIC_ADMIN.includes(pathname)) return noStore(NextResponse.next());
+
+    const session = adminConfigured()
+      ? await verifySessionToken(readCookie(request.headers.get('cookie')))
+      : null;
+    if (session) return noStore(NextResponse.next());
+
+    if (pathname.startsWith('/admin/api/')) {
+      return noStore(NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 }));
     }
-    if (!isAdminAuthorized(request.headers.get('authorization'))) {
-      return new NextResponse('Anmeldung erforderlich', {
-        status: 401,
-        headers: { 'WWW-Authenticate': 'Basic realm="Hikaya Versand", charset="UTF-8"' },
-      });
-    }
-    const res = NextResponse.next();
-    res.headers.set('X-Robots-Tag', 'noindex, nofollow');
-    res.headers.set('Cache-Control', 'no-store');
-    return res;
+    const url = request.nextUrl.clone();
+    url.pathname = '/admin/login';
+    url.search = '';
+    if (pathname !== '/admin') url.searchParams.set('next', pathname);
+    return noStore(NextResponse.redirect(url));
   }
 
   const hasLocale = locales.some(
@@ -42,5 +54,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next|api|studio|favicon.ico|.*\\..*).*)'],
+  matcher: ['/((?!_next|api|favicon.ico|.*\\..*).*)'],
 };

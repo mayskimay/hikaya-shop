@@ -10,7 +10,7 @@
 //
 // Zugangsdaten nur über Umgebungsvariablen – nie im Code oder Repository.
 
-import { shop } from '../shop';
+import type { Company, Parcel } from '../settings';
 
 export type DhlMode = 'test' | 'live';
 
@@ -35,15 +35,15 @@ export function dhlExpressConfig():
   };
 }
 
-export function senderProblems(): string[] {
-  const c = shop.company;
+// Absenderangaben (aus /admin → Shop-Infos), die für ein Etikett noch fehlen
+export function senderProblems(c: Company): string[] {
   const problems: string[] = [];
-  if (!c.name || c.name.startsWith('[')) problems.push('Firmenname');
+  if (!c.name) problems.push('Firmenname');
   if (!c.street) problems.push('Straße');
   if (!c.postalCode) problems.push('PLZ');
   if (!c.city) problems.push('Ort');
   if (!c.phone) problems.push('Telefon');
-  if (!c.email || c.email.startsWith('[')) problems.push('E-Mail');
+  if (!c.email) problems.push('E-Mail');
   return problems;
 }
 
@@ -89,14 +89,16 @@ export async function createDhlExpressLabel(input: {
   recipient: Recipient;
   productCode: string;
   weightKg: number;
+  company: Company;
+  parcel: Parcel;
 }): Promise<{ ok: true; result: LabelResult } | { ok: false; error: string }> {
   const cfg = dhlExpressConfig();
   if (!cfg.ok) return { ok: false, error: cfg.reason };
-  const missing = senderProblems();
-  if (missing.length) return { ok: false, error: `Absenderangaben fehlen in src/lib/shop.ts: ${missing.join(', ')}` };
+  const missing = senderProblems(input.company);
+  if (missing.length) return { ok: false, error: `Absenderangaben fehlen (Verwaltung → Shop-Infos): ${missing.join(', ')}` };
 
-  const c = shop.company;
-  const p = shop.parcel;
+  const c = input.company;
+  const p = input.parcel;
   const r = input.recipient;
   const body = {
     plannedShippingDateAndTime: plannedShippingDate(),
@@ -215,4 +217,42 @@ export async function fetchDhlTracking(
     description: st?.description ?? st?.status ?? '',
     timestamp: st?.timestamp ?? '',
   };
+}
+
+// ---------- Verbindung prüfen (ohne Sendung anzulegen) ----------
+
+// Prüft die MyDHL-Zugangsdaten mit einer Adressprüfung – es wird KEINE Sendung erstellt.
+export async function checkDhlExpressConnection(): Promise<{ ok: boolean; mode?: DhlMode; message: string }> {
+  const cfg = dhlExpressConfig();
+  if (!cfg.ok) return { ok: false, message: cfg.reason };
+  try {
+    const qs = new URLSearchParams({ type: 'delivery', countryCode: 'AT', postalCode: '1010', cityName: 'Wien' });
+    const res = await fetch(`${cfg.baseUrl}/address-validate?${qs}`, {
+      headers: { Authorization: `Basic ${Buffer.from(`${cfg.user}:${cfg.password}`).toString('base64')}`, Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (res.status === 401 || res.status === 403) return { ok: false, mode: cfg.mode, message: 'DHL lehnt die Zugangsdaten ab (Benutzer/Passwort prüfen, API-Freischaltung abwarten).' };
+    if (!res.ok) return { ok: false, mode: cfg.mode, message: `DHL antwortet mit Fehler ${res.status}.` };
+    return { ok: true, mode: cfg.mode, message: cfg.mode === 'test' ? 'Zugangsdaten gültig (Testumgebung). Es wurde keine Sendung erstellt.' : 'Zugangsdaten gültig (Live). Es wurde keine Sendung erstellt.' };
+  } catch {
+    return { ok: false, mode: cfg.mode, message: 'DHL ist nicht erreichbar.' };
+  }
+}
+
+// Prüft den Tracking-Schlüssel mit einer nicht existierenden Sendungsnummer (verbraucht 1 Abfrage).
+export async function checkDhlTrackingKey(): Promise<{ ok: boolean; message: string }> {
+  const key = process.env.DHL_TRACKING_API_KEY?.trim();
+  if (!key) return { ok: false, message: 'DHL_TRACKING_API_KEY fehlt' };
+  try {
+    const res = await fetch('https://api-eu.dhl.com/track/shipments?trackingNumber=0000000000', {
+      headers: { 'DHL-API-Key': key, Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (res.status === 401 || res.status === 403) return { ok: false, message: 'DHL lehnt den Schlüssel ab.' };
+    if (res.status === 404 || res.ok) return { ok: true, message: 'Schlüssel gültig.' };
+    if (res.status === 429) return { ok: false, message: 'Tageslimit erreicht – morgen erneut prüfen.' };
+    return { ok: false, message: `DHL antwortet mit Fehler ${res.status}.` };
+  } catch {
+    return { ok: false, message: 'DHL ist nicht erreichbar.' };
+  }
 }

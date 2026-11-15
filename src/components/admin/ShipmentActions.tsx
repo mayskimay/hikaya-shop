@@ -65,6 +65,10 @@ export default function ShipmentActions({
             <option value="DHL">DHL</option>
             <option value="DHL Express">DHL Express</option>
             <option value="Österreichische Post">Österreichische Post</option>
+            <option value="DPD">DPD</option>
+            <option value="GLS">GLS</option>
+            <option value="UPS">UPS</option>
+            <option value="Hermes">Hermes</option>
           </select>
           <input
             value={manual}

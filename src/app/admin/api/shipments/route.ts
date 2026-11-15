@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { isAdminAuthorized } from '@/lib/adminAuth';
+import { requireAdmin } from '@/lib/adminAuth';
 import { getOrder, saveLabel, markShipped, updateTracking } from '@/lib/orders';
 import { createDhlExpressLabel, dhlTrackingUrl, fetchDhlTracking } from '@/lib/shipping/dhl';
 import { sendShippingConfirmation } from '@/lib/email';
 import { getProducts } from '@/lib/data';
-import { shop, zoneForCountry } from '@/lib/shop';
+import { getShopConfig, zoneFor } from '@/lib/settings';
 
-// Aktionen der Versand-Seite. Zusätzlich zur Middleware wird hier das Passwort erneut geprüft.
+// Aktionen beim Paketversand. Zusätzlich zur Middleware wird hier die Anmeldung erneut geprüft.
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -14,9 +14,8 @@ export const runtime = 'nodejs';
 const TRACKING_RE = /^[A-Za-z0-9-]{6,40}$/;
 
 export async function POST(req: Request) {
-  if (!isAdminAuthorized(req.headers.get('authorization'))) {
-    return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
-  }
+  const denied = await requireAdmin(req, { write: true });
+  if (denied) return denied;
   let body: { action?: string; orderNumber?: string; trackingNumber?: string; carrier?: string; force?: boolean };
   try {
     body = await req.json();
@@ -35,10 +34,11 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Für diese Bestellung gibt es schon ein Etikett.' }, { status: 409 });
       }
       const country = order.address?.country || order.country;
-      const zone = zoneForCountry(country);
-      if (!zone?.dhlProductCode) {
+      const cfg = await getShopConfig({ fresh: true });
+      const zone = zoneFor(cfg, country);
+      if (zone?.carrier !== 'dhl-express' || !zone.dhlProductCode) {
         return NextResponse.json(
-          { error: `Für ${country} wird kein Etikett automatisch erstellt (Zoll/Export nötig). Bitte im MyDHL-Portal erstellen und die Sendungsnummer unten eintragen.` },
+          { error: `Für ${country} ist kein automatisches DHL-Etikett eingestellt (Verwaltung → Versand). Etikett beim Versanddienst erstellen und die Sendungsnummer unten eintragen.` },
           { status: 422 }
         );
       }
@@ -47,15 +47,17 @@ export async function POST(req: Request) {
       }
       const products = await getProducts();
       const grams =
-        shop.parcel.packagingWeightG +
+        cfg.parcel.packagingWeightG +
         order.items.reduce((sum, it) => {
-          const w = products.find((p) => p.slug === it.slug)?.weight ?? shop.parcel.defaultItemWeightG;
+          const w = products.find((p) => p.slug === it.slug)?.weight ?? cfg.parcel.defaultItemWeightG;
           return sum + w * it.quantity;
         }, 0);
       const result = await createDhlExpressLabel({
         reference: order.orderNumber,
         productCode: zone.dhlProductCode,
         weightKg: grams / 1000,
+        company: cfg.company,
+        parcel: cfg.parcel,
         recipient: {
           name: order.shippingName || order.customerName,
           email: order.email,

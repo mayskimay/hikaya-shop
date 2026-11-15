@@ -1,11 +1,11 @@
 import { notFound } from 'next/navigation';
-import { getDict } from '@/lib/dict';
 import { isLocale, defaultLocale, locales, formatPrice } from '@/lib/i18n';
-import { shop, countryName } from '@/lib/shop';
-import { activePaymentMethods, dhlLiveForCustomers } from '@/lib/providers';
+import { countryName } from '@/lib/shop';
+import { activePaymentMethods, dhlLive } from '@/lib/providers';
+import { getShopConfig, getTexts } from '@/lib/settings';
 
-// Zahlungsarten werden stündlich aus Stripe aktualisiert
-export const revalidate = 3600;
+// Zahlungsarten und Einstellungen werden regelmäßig neu geladen
+export const revalidate = 300;
 
 const pages = ['about', 'shipping', 'payment', 'returns', 'contact', 'privacy', 'terms', 'imprint'] as const;
 type PageKey = (typeof pages)[number];
@@ -23,15 +23,17 @@ export default async function InfoPage({
   const locale = isLocale(raw) ? raw : defaultLocale;
   if (!(pages as readonly string[]).includes(page)) notFound();
 
-  const content = getDict(locale).info[page as PageKey];
+  const cfg = await getShopConfig();
+  const content = (await getTexts(locale, cfg)).info[page as PageKey];
   const de = locale === 'de';
-  const carrierLive = dhlLiveForCustomers();
+  const company = cfg.company;
+  const carrierLive = dhlLive(cfg) && cfg.zones.some((z) => z.carrier === 'dhl-express');
   const payments = page === 'payment' ? await activePaymentMethods() : null;
 
   return (
     <div className="section container" style={{ maxWidth: 760 }}>
       <h1>{content.title}</h1>
-      <p>{content.body}</p>
+      <p style={{ whiteSpace: 'pre-line' }}>{content.body}</p>
 
       {page === 'shipping' && (
         <table className="info-table">
@@ -44,14 +46,14 @@ export default async function InfoPage({
             </tr>
           </thead>
           <tbody>
-            {shop.shippingZones.map((z) => (
+            {cfg.zones.map((z) => (
               <tr key={z.id}>
                 <td>
                   <strong>{z.label[locale]}</strong>
                   <br />
                   <small>{z.countries.map((c) => countryName(c, locale)).join(', ')}</small>
                 </td>
-                {carrierLive && <td>{z.carrier}</td>}
+                {carrierLive && <td>{z.carrier === 'dhl-express' ? 'DHL Express' : de ? 'Standardversand' : 'Standard shipping'}</td>}
                 <td>
                   {formatPrice(z.amount, locale)}
                   {z.freeFrom !== undefined && (
@@ -70,7 +72,7 @@ export default async function InfoPage({
         </table>
       )}
 
-      {page === 'shipping' && <p>{shop.packagingNote[locale]}</p>}
+      {page === 'shipping' && <p>{cfg.packagingNote[locale]}</p>}
 
       {payments && (
         payments.methods.length > 0 ? (
@@ -93,34 +95,40 @@ export default async function InfoPage({
         )
       )}
 
+      {page === 'contact' && cfg.contact.email && (
+        <p>
+          E-Mail: <a href={`mailto:${cfg.contact.email}`}>{cfg.contact.email}</a>
+        </p>
+      )}
+
       {page === 'imprint' && (
         <dl className="info-list">
           <dt>{de ? 'Unternehmen' : 'Company'}</dt>
-          <dd>{shop.company.name}</dd>
+          <dd>{company.name || (de ? '[Platzhalter – in der Verwaltung unter Shop-Infos eintragen]' : '[Placeholder]')}</dd>
           <dt>{de ? 'Anschrift' : 'Address'}</dt>
-          <dd>{shop.company.address}</dd>
+          <dd>{company.address || (de ? '[Platzhalter – in der Verwaltung unter Shop-Infos eintragen]' : '[Placeholder]')}</dd>
           <dt>E-Mail</dt>
-          <dd>{shop.company.email}</dd>
-          {shop.company.phone && (
+          <dd>{company.email || (de ? '[Platzhalter – in der Verwaltung unter Shop-Infos eintragen]' : '[Placeholder]')}</dd>
+          {company.phone && (
             <>
               <dt>{de ? 'Telefon' : 'Phone'}</dt>
-              <dd>{shop.company.phone}</dd>
+              <dd>{company.phone}</dd>
             </>
           )}
           <dt>{de ? 'Gewerbe' : 'Trade'}</dt>
-          <dd>{shop.company.trade}</dd>
+          <dd>{company.trade || (de ? '[Platzhalter – in der Verwaltung unter Shop-Infos eintragen]' : '[Placeholder]')}</dd>
           <dt>{de ? 'Gewerbebehörde' : 'Trade authority'}</dt>
-          <dd>{shop.company.authority}</dd>
-          {shop.company.uid && (
+          <dd>{company.authority || (de ? '[Platzhalter – in der Verwaltung unter Shop-Infos eintragen]' : '[Placeholder]')}</dd>
+          {company.uid && (
             <>
               <dt>{de ? 'UID-Nummer' : 'VAT ID'}</dt>
-              <dd>{shop.company.uid}</dd>
+              <dd>{company.uid}</dd>
             </>
           )}
-          {shop.company.register && (
+          {company.register && (
             <>
               <dt>{de ? 'Firmenbuch' : 'Company register'}</dt>
-              <dd>{shop.company.register}</dd>
+              <dd>{company.register}</dd>
             </>
           )}
           <dt>{de ? 'Online-Streitbeilegung' : 'Online dispute resolution'}</dt>

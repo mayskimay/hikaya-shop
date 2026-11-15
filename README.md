@@ -58,7 +58,7 @@ Wichtig: Sobald das CMS verbunden ist, werden die Beispielprodukte nicht mehr an
 - `src/lib/stripe.ts`, `orders.ts`, `fulfillment.ts`, `email.ts` – Zahlung, Bestellungen, E-Mails (nur Server)
 - `src/sanity/schemaTypes/order.ts` – Bestellungen im CMS
 - `src/lib/shipping/dhl.ts` – DHL Express (Etiketten) und DHL-Sendungsverfolgung (nur Server)
-- `src/app/admin/versand/` – Versand-Seite für die Inhaberin (Passwortschutz in `src/middleware.ts`)
+- `src/app/admin/` – Verwaltungsbereich (Anmeldung: `src/lib/adminAuth.ts`, `src/middleware.ts`); Einstellungen: `src/lib/settings.ts`
 - `src/app/api/cron/tracking/` + `vercel.json` – tägliche Statusabfrage bei DHL
 - `src/app/globals.css` – Farben und Gestaltung
 
@@ -70,14 +70,41 @@ Wichtig: Sobald das CMS verbunden ist, werden die Beispielprodukte nicht mehr an
 4. Echte Texte für Über uns, Versand, Zahlung
 5. Hero-Foto, Domain
 
-## Anbieter-Status
+## Verwaltungsbereich /admin
 
-Auf der Versand-Seite `/admin/versand` zeigt „Anbieter-Status“ für jeden Anbieter, ob er **aktiv**, im **Testmodus**, **gesperrt** (z. B. Live-Schlüssel ohne Freigabe) oder **fehlt**. Grundsätze:
+Unter `/admin` verwaltet die Inhaberin den Shop ohne Code:
 
-- **Zahlungsarten** zeigt Stripe auf seiner Zahlungsseite – nur die im Stripe-Dashboard eingeschalteten und für das Konto verfügbaren. Die Seite *Zahlung* im Shop liest dieselbe Liste aus Stripe (stündlich aktualisiert).
-- **„DHL Express“** wird Kundinnen erst genannt, wenn DHL **live** verbunden und die Absenderadresse vollständig ist. Vorher steht dort „Standardversand“.
-- **Logos** von Zahlungs- und Versandanbietern werden nur verwendet, wenn die offiziellen Dateien und die Erlaubnis vorliegen (Stripe zeigt die Zahlungslogos auf seiner Seite selbst).
-- **Bestellstatus:** Zahlung ausstehend → Bezahlt → Versendet → Zugestellt; außerdem Zahlung fehlgeschlagen, Erstattet / Teilweise erstattet (aus Stripe) und Storniert.
+| Bereich | Was geht dort |
+| --- | --- |
+| Übersicht | offene Bestellungen, Bestand, fehlende Angaben, Status aller Anbieter |
+| Produkte | Preis, Sale-Preis, Bestand direkt ändern; „Bearbeiten“ öffnet Fotos, Größen, Farben, Texte (DE/EN) im Editor |
+| Kategorien | Haupt- und Unterkategorien (DE/EN), Reihenfolge, Anzahl Produkte |
+| Bestellungen | alle Bestellungen mit Filter und Suche, stornieren (Bestand kommt zurück), „zugestellt“, Link zur Erstattung bei Stripe |
+| Pakete versenden | Etiketten (DHL, falls verbunden) oder Sendungsnummer von Hand → Versand-E-Mail |
+| Versand | Versandzonen, Länder, Kosten, Gratis-ab, Lieferzeiten (DE/EN), Lieferdienst je Zone, Paketmaße; Status der Lieferdienste |
+| Zahlungen | Stripe- und PayPal-Status, aktive Zahlungsarten aus dem Stripe-Konto, Bankkonto-Status, Einrichtungsschritte |
+| Shop-Infos | Impressumsangaben, Kontakt & Social Media, Steuer- und Versandhinweis |
+| Texte (DE/EN) | Startseite und Info-Seiten; leer = Standardtext |
+
+Gespeichert wird in Sanity (Dokumente `shopSettings`, `shippingSettings`, `siteTexts` – nur öffentliche Angaben). Solange dort nichts gespeichert ist, gelten die Startwerte aus `src/lib/shop.ts`. Änderungen erscheinen im Shop nach spätestens einer Minute.
+
+### Anmeldung einrichten
+
+1. Bei Vercel unter *Settings → Environment Variables* eintragen: `ADMIN_USER`, `ADMIN_PASSWORD` (Regeln siehe `.env.example`) und `ADMIN_SESSION_SECRET` (zufällig, mind. 32 Zeichen).
+2. Neu deployen, dann `https://DEINE-DOMAIN/admin` öffnen und anmelden.
+
+Sicherheit: Ohne diese drei Werte oder mit schwachem Passwort bleibt `/admin` gesperrt. Nach der Anmeldung gilt ein signiertes Cookie (HttpOnly, Secure, SameSite=Strict) 8 Stunden. Jede Admin-Seite und jede Admin-Schnittstelle prüft die Anmeldung serverseitig; speichernde Anfragen werden nur von der eigenen Seite angenommen. Nach 5 Fehlversuchen wird die Anmeldung 15 Minuten gesperrt. Auch der Editor `/studio` ist nur nach der Anmeldung erreichbar (und hat zusätzlich das Sanity-Login). Alle Sitzungen beenden: `ADMIN_SESSION_SECRET` ändern und neu deployen.
+
+### Status der Anbieter
+
+- **aktiv** – mit dem echten Konto verbunden und geprüft (Stripe: Live-Schlüssel freigegeben, Konto nimmt Zahlungen an, Bankkonto bestätigt, Webhook eingetragen; DHL: Live und Absender vollständig)
+- **im Testmodus** – Testzugang verbunden, keine echten Zahlungen/Sendungen
+- **noch nicht verbunden** – keine Zugangsdaten
+- **wartet auf deine Einrichtung** – teilweise eingerichtet, ein Schritt der Inhaberin fehlt
+
+„Verbindung prüfen“ testet Zugangsdaten beim Anbieter, ohne Zahlungen oder Sendungen auszulösen. Zugangsdaten und Bankdaten werden im Adminbereich nie eingegeben oder gespeichert: Schlüssel nur bei Vercel, Bankkonto nur bei Stripe.
+
+Grundsätze für Kundinnen: Zahlungsarten zeigt nur Stripe (was im Konto eingeschaltet und freigeschaltet ist); „DHL Express“ erscheint erst, wenn DHL live verbunden ist, vorher „Standardversand“; Logos nur mit offiziellen Dateien und Erlaubnis.
 
 ## Bestellablauf – so funktioniert er
 
@@ -104,7 +131,7 @@ Sicherheit: Alle Schlüssel stehen nur in Umgebungsvariablen (Vorlage: `.env.exa
 
 ### So läuft der Versand ab
 
-1. Nach der Zahlung steht die Bestellung auf der **Versand-Seite** `https://DEINE-ADRESSE/admin/versand` unter „Zu versenden“ (passwortgeschützt).
+1. Nach der Zahlung steht die Bestellung in der Verwaltung unter **Pakete versenden** (`/admin/versand/pakete`) bei „Zu versenden“.
 2. **„DHL-Etikett erstellen“** → der Shop schickt Adresse, Gewicht und Paketmaße an DHL Express und bekommt Sendungsnummer + Etikett (PDF) zurück. **„Etikett öffnen / drucken“** öffnet das PDF.
    (Für Länder außerhalb der EU, z. B. Schweiz, wird wegen Zoll kein automatisches Etikett erstellt – dort im MyDHL-Portal erstellen.)
 3. Paket abgeben, dann **„Paket ist abgegeben → Kundin informieren“** → Status „Versendet“, die Kundin bekommt eine E-Mail mit Sendungsnummer und Link zur DHL-Sendungsverfolgung.
@@ -168,6 +195,6 @@ Zurück in den Testmodus: Test-Schlüssel und Test-Webhook-Secret wieder eintrag
 | Firmenangaben (Impressum, E-Mails), Steuerhinweis | `src/lib/shop.ts` → `company`, `vatNote` |
 | Zahlungsarten | Stripe-Dashboard → Zahlungsmethoden |
 | Bestellstatus ansehen | Studio → *Bestellung* |
-| Etiketten, Sendungsnummer, Versand-E-Mail | Shop → `/admin/versand` |
+| Etiketten, Sendungsnummer, Versand-E-Mail | Shop → `/admin/versand/pakete` |
 | Absender, Paketmaße, Verpackungshinweis, DHL-Produktcodes | `src/lib/shop.ts` |
 | Texte (DE/EN) | `src/lib/dict.ts` |

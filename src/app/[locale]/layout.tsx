@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Cormorant_Garamond, Inter } from 'next/font/google';
 import '../globals.css';
 import { CartProvider } from '@/lib/cart';
-import { getDict } from '@/lib/dict';
+import { getTexts } from '@/lib/settings';
 import { isLocale, locales, defaultLocale } from '@/lib/i18n';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -31,7 +31,7 @@ export default async function RootLayout({
 }) {
   const { locale: raw } = await params;
   const locale = isLocale(raw) ? raw : defaultLocale;
-  const t = getDict(locale);
+  const t = await getTexts(locale);
 
   return (
     <html lang={locale} className={`${display.variable} ${body.variable}`} suppressHydrationWarning>

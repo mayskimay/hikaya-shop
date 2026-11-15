@@ -1,12 +1,13 @@
-import { isAdminAuthorized } from '@/lib/adminAuth';
+import { requireAdmin } from '@/lib/adminAuth';
 import { getLabelPdf } from '@/lib/orders';
 
-// Liefert das gespeicherte DHL-Etikett als PDF (nur mit Passwort)
+// Liefert das gespeicherte DHL-Etikett als PDF (nur angemeldet)
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function GET(req: Request) {
-  if (!isAdminAuthorized(req.headers.get('authorization'))) return new Response('Nicht angemeldet', { status: 401 });
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   const order = new URL(req.url).searchParams.get('order') ?? '';
   if (!/^HK-\d{8}-[A-Z0-9]{6}$/.test(order)) return new Response('Ungültige Bestellnummer', { status: 400 });
   const b64 = await getLabelPdf(order);

@@ -1,9 +1,8 @@
 import Link from 'next/link';
-import { getDict } from '@/lib/dict';
 import { isLocale, defaultLocale, type Locale } from '@/lib/i18n';
 import { getCategories, getProducts } from '@/lib/data';
 import { filterProducts, type Product } from '@/lib/products';
-import { site } from '@/lib/site';
+import { getShopConfig, getTexts } from '@/lib/settings';
 import ProductCard from '@/components/ProductCard';
 
 function Row({
@@ -44,14 +43,15 @@ export default async function HomePage({
 }) {
   const { locale: raw } = await params;
   const locale = isLocale(raw) ? raw : defaultLocale;
-  const t = getDict(locale);
+  const cfg = await getShopConfig();
+  const t = await getTexts(locale, cfg);
   const shop = `/${locale}/shop`;
   const [categories, all] = await Promise.all([getCategories(), getProducts()]);
 
   const socials = [
-    { label: 'Instagram', url: site.instagram },
-    { label: 'TikTok', url: site.tiktok },
-    { label: 'WhatsApp', url: site.whatsapp },
+    { label: 'Instagram', url: cfg.contact.instagram },
+    { label: 'TikTok', url: cfg.contact.tiktok },
+    { label: 'WhatsApp', url: cfg.contact.whatsapp },
   ].filter((s) => s.url);
 
   return (
