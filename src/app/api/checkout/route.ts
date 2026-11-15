@@ -101,7 +101,7 @@ export async function POST(req: Request) {
   const shippingEuro = shippingCost(country, subtotalCents / 100) ?? zone.amount;
   const sp = 'shipping_options[0][shipping_rate_data]';
   params.set(`${sp}[type]`, 'fixed_amount');
-  params.set(`${sp}[display_name]`, `${locale === 'de' ? 'Standardversand' : 'Standard shipping'} (${zone.label[locale]})`);
+  params.set(`${sp}[display_name]`, `${zone.carrier} – ${zone.label[locale]} (${zone.delivery[locale]})`.slice(0, 100));
   params.set(`${sp}[fixed_amount][amount]`, String(Math.round(shippingEuro * 100)));
   params.set(`${sp}[fixed_amount][currency]`, shop.currency);
 

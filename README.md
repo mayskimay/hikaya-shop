@@ -57,6 +57,9 @@ Wichtig: Sobald das CMS verbunden ist, werden die Beispielprodukte nicht mehr an
 - `src/app/api/stripe/webhook/` – empfängt Zahlungsbestätigungen von Stripe
 - `src/lib/stripe.ts`, `orders.ts`, `fulfillment.ts`, `email.ts` – Zahlung, Bestellungen, E-Mails (nur Server)
 - `src/sanity/schemaTypes/order.ts` – Bestellungen im CMS
+- `src/lib/shipping/dhl.ts` – DHL Express (Etiketten) und DHL-Sendungsverfolgung (nur Server)
+- `src/app/admin/versand/` – Versand-Seite für die Inhaberin (Passwortschutz in `src/middleware.ts`)
+- `src/app/api/cron/tracking/` + `vercel.json` – tägliche Statusabfrage bei DHL
 - `src/app/globals.css` – Farben und Gestaltung
 
 ## Noch offen
@@ -76,6 +79,41 @@ Wichtig: Sobald das CMS verbunden ist, werden die Beispielprodukte nicht mehr an
 5. **Danke-Seite** (`/de/checkout/success`): zeigt Bestellnummer, Artikel, Summe und Lieferadresse.
 
 Sicherheit: Alle Schlüssel stehen nur in Umgebungsvariablen (Vorlage: `.env.example`). Ein Live-Schlüssel (`sk_live_…`) wird **nur** angenommen, wenn zusätzlich `STRIPE_ALLOW_LIVE=true` gesetzt ist.
+
+## Versand mit DHL
+
+### Welche DHL-Anbindung passt?
+
+| DHL-Angebot | Für Hikaya (Versand aus Österreich) |
+| --- | --- |
+| **DHL Express – MyDHL API** | ✅ **Eingebaut.** Offizielle Schnittstelle, in Österreich verfügbar (national und international), mit Testumgebung. Benötigt ein DHL-Express-Kundenkonto. |
+| DHL Paket DE – Parcel DE Shipping API | ❌ Nur für Geschäftskunden von DHL Paket **Deutschland** (deutsches EKP-Konto). |
+| DHL eCommerce (eConnect) | ⚠️ Für Händler mit mehr als 3.000 grenzüberschreitenden Paketen pro Jahr – später möglich. |
+| Versandplattform (z. B. Sendcloud) | Alternative: DHL Express, DHL eCommerce und Österreichische Post über eine Oberfläche. Würde eine eigene Anbindung brauchen. |
+
+**Ohne DHL-Zugang funktioniert der Ablauf trotzdem:** Etikett im DHL-Portal oder an der Filiale erstellen, Sendungsnummer auf der Versand-Seite eintragen → die Kundin bekommt die Versand-E-Mail mit Sendungsverfolgung.
+
+### So läuft der Versand ab
+
+1. Nach der Zahlung steht die Bestellung auf der **Versand-Seite** `https://DEINE-ADRESSE/admin/versand` unter „Zu versenden“ (passwortgeschützt).
+2. **„DHL-Etikett erstellen“** → der Shop schickt Adresse, Gewicht und Paketmaße an DHL Express und bekommt Sendungsnummer + Etikett (PDF) zurück. **„Etikett öffnen / drucken“** öffnet das PDF.
+   (Für Länder außerhalb der EU, z. B. Schweiz, wird wegen Zoll kein automatisches Etikett erstellt – dort im MyDHL-Portal erstellen.)
+3. Paket abgeben, dann **„Paket ist abgegeben → Kundin informieren“** → Status „Versendet“, die Kundin bekommt eine E-Mail mit Sendungsnummer und Link zur DHL-Sendungsverfolgung.
+4. Einmal täglich fragt der Shop bei DHL den Status ab. Ist das Paket zugestellt, wechselt die Bestellung auf „Zugestellt“. Den Status siehst du im Studio unter *Bestellung* und auf der Versand-Seite.
+
+### DHL einrichten – Schritt für Schritt
+
+1. **Versand-Seite schützen:** Bei Vercel `ADMIN_USER` und `ADMIN_PASSWORD` (mind. 12 Zeichen) eintragen. Ohne diese Werte ist die Seite gesperrt.
+2. **Absenderadresse eintragen** in `src/lib/shop.ts` → `company`: Name, Straße, PLZ, Ort, **Telefon** (DHL verlangt sie) und E-Mail. Außerdem in `parcel` das Gewicht der Verpackung und die Paketmaße. Bei den Produkten im Studio das **Versandgewicht** eintragen.
+3. **DHL-Express-Kundenkonto** beantragen (dhl.com → Österreich → Geschäftskunden / DHL Express). Du bekommst eine **Kontonummer**. Preise und Konditionen verhandelst du mit DHL – sie gehören dann als Versandkosten in `src/lib/shop.ts`.
+4. **API-Zugang beantragen:** Auf [developer.dhl.com](https://developer.dhl.com) registrieren → *DHL Express – MyDHL API* → „Get Access“ / Zugang anfragen. DHL prüft die Anfrage und schaltet zuerst die **Testumgebung** frei. Benutzername und Passwort erscheinen danach im Portal.
+5. **Bei Vercel eintragen:** `DHL_EXPRESS_API_USER`, `DHL_EXPRESS_API_PASSWORD`, `DHL_EXPRESS_ACCOUNT_NUMBER`, `DHL_EXPRESS_MODE=test`. Redeploy.
+6. **Testen:** Testbestellung machen, auf der Versand-Seite „DHL-Etikett erstellen“. Im Testmodus ist das Etikett als **„Test-Etikett – nicht gültig“** markiert und darf **nicht** verwendet werden.
+7. **Produktcodes prüfen:** In `src/lib/shop.ts` hat jede Versandzone einen DHL-Produktcode (`N` = Domestic Express in Österreich, `U` = Express Worldwide EU). Mit DHL abklären, welche Produkte in deinem Vertrag freigeschaltet sind, und ggf. anpassen.
+8. **Sendungsverfolgung:** Auf developer.dhl.com eine App mit *Shipment Tracking – Unified* anlegen (kostenlos, 250 Abfragen/Tag) → Schlüssel als `DHL_TRACKING_API_KEY` eintragen. Dazu `CRON_SECRET` (beliebige lange Zeichenfolge) für die tägliche Abfrage.
+9. **Live schalten:** Erst wenn DHL die Produktion freigegeben hat (DHL prüft die Testetiketten) und ein Test erfolgreich war: `DHL_EXPRESS_MODE=live` und `DHL_ALLOW_LIVE=true`. Redeploy. Dann ein echtes Paket an dich selbst schicken.
+
+Hinweis: Der Link zur Sendungsverfolgung führt zur öffentlichen DHL-Seite (`dhl.com/at-de/home/tracking.html?tracking-id=…`). Einmal mit einer echten Sendungsnummer prüfen.
 
 ## Zahlung einrichten (Stripe) – Schritt für Schritt
 
@@ -120,5 +158,7 @@ Zurück in den Testmodus: Test-Schlüssel und Test-Webhook-Secret wieder eintrag
 | Versandzonen, -kosten, Lieferzeiten | `src/lib/shop.ts` → `shippingZones` |
 | Firmenangaben (Impressum, E-Mails), Steuerhinweis | `src/lib/shop.ts` → `company`, `vatNote` |
 | Zahlungsarten | Stripe-Dashboard → Zahlungsmethoden |
-| Bestellstatus, Sendungsnummer | Studio → *Bestellung* |
+| Bestellstatus ansehen | Studio → *Bestellung* |
+| Etiketten, Sendungsnummer, Versand-E-Mail | Shop → `/admin/versand` |
+| Absender, Paketmaße, Verpackungshinweis, DHL-Produktcodes | `src/lib/shop.ts` |
 | Texte (DE/EN) | `src/lib/dict.ts` |

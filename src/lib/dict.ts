@@ -64,6 +64,7 @@ const de = {
     shipping: 'Versand',
     shippingFree: 'Gratis',
     shipTo: 'Lieferland',
+    carrier: 'Versand mit',
     delivery: 'Lieferzeit',
     freeFrom: 'Gratisversand ab',
     terms: 'Ich akzeptiere die AGB und habe die Widerrufsbelehrung sowie die Datenschutzerklärung gelesen.',
@@ -77,7 +78,7 @@ const de = {
   },
   checkout: {
     successTitle: 'Vielen Dank für deine Bestellung',
-    successText: 'Deine Zahlung ist eingegangen. Wir melden uns, sobald dein Paket unterwegs ist.',
+    successText: 'Deine Zahlung ist eingegangen. Sobald dein Paket an DHL übergeben ist, bekommst du eine E-Mail mit der Sendungsnummer zur Sendungsverfolgung.',
     pendingTitle: 'Deine Bestellung ist eingegangen',
     pendingText: 'Deine Zahlung wird noch von der Bank bestätigt (bei Lastschrift kann das einige Tage dauern). Wir versenden, sobald die Zahlung eingegangen ist.',
     invalidTitle: 'Bestellung nicht gefunden',
@@ -177,6 +178,7 @@ const en: Dict = {
     shipping: 'Shipping',
     shippingFree: 'Free',
     shipTo: 'Ship to',
+    carrier: 'Shipped with',
     delivery: 'Delivery time',
     freeFrom: 'Free shipping from',
     terms: 'I accept the terms and conditions and have read the withdrawal policy and the privacy policy.',
@@ -190,7 +192,7 @@ const en: Dict = {
   },
   checkout: {
     successTitle: 'Thank you for your order',
-    successText: 'Your payment has been received. We will let you know as soon as your parcel is on its way.',
+    successText: 'Your payment has been received. As soon as your parcel has been handed over to DHL, you will receive an email with a tracking number.',
     pendingTitle: 'We have received your order',
     pendingText: 'Your payment is still being confirmed by the bank (this can take a few days for direct debit). We will ship as soon as the payment has arrived.',
     invalidTitle: 'Order not found',

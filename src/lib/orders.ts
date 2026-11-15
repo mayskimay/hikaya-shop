@@ -7,7 +7,7 @@
 
 import { apiVersion, dataset, isSanityConfigured, projectId } from '@/sanity/env';
 
-export type OrderStatus = 'awaiting_payment' | 'paid' | 'payment_failed' | 'shipped' | 'cancelled';
+export type OrderStatus = 'awaiting_payment' | 'paid' | 'payment_failed' | 'shipped' | 'delivered' | 'cancelled';
 
 export interface OrderItem {
   slug: string;
@@ -30,6 +30,13 @@ export interface Order {
   phone: string;
   shippingName: string;
   shippingAddress: string; // mehrzeilig
+  address: {
+    line1: string;
+    line2: string;
+    postalCode: string;
+    city: string;
+    country: string;
+  };
   country: string;
   items: OrderItem[];
   subtotal: number;
@@ -119,7 +126,11 @@ export async function saveOrder(
   const mutations: unknown[] = [{ createIfNotExists: doc }];
   const alreadyPaid = existing?.stockAdjusted === true;
   // Status nicht "zurückdrehen", wenn die Bestellung schon bezahlt/versendet ist
-  const keepStatus = existing?.status === 'paid' || existing?.status === 'shipped' || existing?.status === 'cancelled';
+  const keepStatus =
+    existing?.status === 'paid' ||
+    existing?.status === 'shipped' ||
+    existing?.status === 'delivered' ||
+    existing?.status === 'cancelled';
   if (!keepStatus) {
     mutations.push({ patch: { id, set: { status: order.status, paymentMethod: order.paymentMethod } } });
   }
@@ -147,4 +158,85 @@ export async function saveOrder(
 export async function setOrderStatus(orderNumber: string, status: OrderStatus): Promise<void> {
   if (!canStoreOrders()) return;
   await sanityMutate([{ patch: { id: orderDocId(orderNumber), set: { status } } }]);
+}
+
+// ---------- Versand ----------
+
+export interface ShippingOrder extends Order {
+  carrier?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
+  trackingState?: string;
+  trackingDescription?: string;
+  trackingUpdatedAt?: string;
+  shippedAt?: string;
+  labelCreatedInMode?: string;
+  hasLabel?: boolean;
+}
+
+const ORDER_FIELDS = `orderNumber, status, testMode, locale, createdAt, email, customerName, phone,
+  shippingName, shippingAddress, address, country, items, subtotal, shipping, total, currency,
+  paymentMethod, stripeSessionId, stripePaymentIntent, carrier, trackingNumber, trackingUrl,
+  trackingState, trackingDescription, trackingUpdatedAt, shippedAt, labelCreatedInMode,
+  "hasLabel": defined(labelPdf)`;
+
+export async function listOrders(statuses: OrderStatus[], limit = 100): Promise<ShippingOrder[]> {
+  if (!canStoreOrders()) return [];
+  return sanityQuery<ShippingOrder[]>(
+    `*[_type == "order" && status in $statuses] | order(createdAt desc)[0...$limit]{ ${ORDER_FIELDS} }`,
+    { statuses, limit }
+  );
+}
+
+export async function getOrder(orderNumber: string): Promise<ShippingOrder | null> {
+  if (!canStoreOrders()) return null;
+  return sanityQuery<ShippingOrder | null>(`*[_id == $id][0]{ ${ORDER_FIELDS} }`, { id: orderDocId(orderNumber) });
+}
+
+export async function getLabelPdf(orderNumber: string): Promise<string | null> {
+  if (!canStoreOrders()) return null;
+  return sanityQuery<string | null>(`*[_id == $id][0].labelPdf`, { id: orderDocId(orderNumber) });
+}
+
+// Etikett speichern (Status bleibt "bezahlt", bis das Paket wirklich übergeben ist)
+export async function saveLabel(orderNumber: string, data: { carrier: string; trackingNumber: string; trackingUrl: string; labelPdf: string; mode: string }) {
+  await sanityMutate([
+    {
+      patch: {
+        id: orderDocId(orderNumber),
+        set: {
+          carrier: data.carrier,
+          trackingNumber: data.trackingNumber,
+          trackingUrl: data.trackingUrl,
+          labelPdf: data.labelPdf,
+          labelCreatedInMode: data.mode,
+          labelCreatedAt: new Date().toISOString(),
+        },
+      },
+    },
+  ]);
+}
+
+export async function markShipped(orderNumber: string, data: { carrier: string; trackingNumber: string; trackingUrl: string }) {
+  await sanityMutate([
+    {
+      patch: {
+        id: orderDocId(orderNumber),
+        set: { ...data, status: 'shipped', shippedAt: new Date().toISOString() },
+      },
+    },
+  ]);
+}
+
+export async function updateTracking(orderNumber: string, state: string, description: string) {
+  const set: Record<string, string> = {
+    trackingState: state,
+    trackingDescription: description,
+    trackingUpdatedAt: new Date().toISOString(),
+  };
+  if (state === 'delivered') {
+    set.status = 'delivered';
+    set.deliveredAt = new Date().toISOString();
+  }
+  await sanityMutate([{ patch: { id: orderDocId(orderNumber), set } }]);
 }

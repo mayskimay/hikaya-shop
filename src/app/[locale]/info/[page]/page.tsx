@@ -32,6 +32,7 @@ export default async function InfoPage({
           <thead>
             <tr>
               <th>{de ? 'Zone' : 'Zone'}</th>
+              <th>{de ? 'Versand mit' : 'Carrier'}</th>
               <th>{de ? 'Kosten' : 'Cost'}</th>
               <th>{de ? 'Lieferzeit' : 'Delivery time'}</th>
             </tr>
@@ -44,6 +45,7 @@ export default async function InfoPage({
                   <br />
                   <small>{z.countries.map((c) => countryName(c, locale)).join(', ')}</small>
                 </td>
+                <td>{z.carrier}</td>
                 <td>
                   {formatPrice(z.amount, locale)}
                   {z.freeFrom !== undefined && (
@@ -61,6 +63,8 @@ export default async function InfoPage({
           </tbody>
         </table>
       )}
+
+      {page === 'shipping' && <p>{shop.packagingNote[locale]}</p>}
 
       {page === 'imprint' && (
         <dl className="info-list">

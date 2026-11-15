@@ -148,7 +148,7 @@ export default function CartView({
           </select>
           {zone && (
             <small className="note">
-              {t.delivery}: {zone.delivery[locale]}
+              {t.carrier}: {zone.carrier} · {t.delivery}: {zone.delivery[locale]}
               {zone.freeFrom !== undefined && ` · ${t.freeFrom} ${formatPrice(zone.freeFrom, locale)}`}
             </small>
           )}
@@ -167,6 +167,7 @@ export default function CartView({
           <strong>{formatPrice(subtotal + ship, locale)}</strong>
         </div>
         <p className="note">{shop.vatNote[locale]}</p>
+        <p className="note">{shop.packagingNote[locale]}</p>
 
         <label className="check">
           <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />

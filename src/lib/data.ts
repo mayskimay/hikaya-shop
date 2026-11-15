@@ -36,6 +36,7 @@ interface RawProduct {
   colors: { name: RawL; hex: string | null }[] | null;
   sizes: string[] | null;
   stock: number | null;
+  weight: number | null;
   images: (string | null)[] | null;
 }
 
@@ -46,7 +47,7 @@ const PRODUCTS_QUERY = `*[_type == "product" && defined(slug.current)] | order(_
   "sub": subcategory->slug.current,
   price, salePrice, bestseller, isNew,
   "colors": colors[]{ name, hex },
-  sizes, stock,
+  sizes, stock, weight,
   "images": images[].asset->url
 }`;
 
@@ -69,6 +70,7 @@ function mapProduct(r: RawProduct): Product {
     colors: colors.length ? colors : [{ name: { de: 'Standard', en: 'Default' }, hex: '#cfcfc4' }],
     sizes: r.sizes && r.sizes.length ? r.sizes : ['One size'],
     stock: r.stock ?? 0,
+    weight: r.weight && r.weight > 0 ? r.weight : undefined,
     images: (r.images ?? []).filter((u): u is string => Boolean(u)),
   };
 }

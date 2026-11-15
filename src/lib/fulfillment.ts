@@ -80,6 +80,13 @@ export async function buildOrder(session: CheckoutSession, status: OrderStatus):
     phone: cust.phone ?? '',
     shippingName: ship?.name ?? cust.name ?? '',
     shippingAddress: formatAddress(ship?.address ?? cust.address),
+    address: {
+      line1: (ship?.address ?? cust.address)?.line1 ?? '',
+      line2: (ship?.address ?? cust.address)?.line2 ?? '',
+      postalCode: (ship?.address ?? cust.address)?.postal_code ?? '',
+      city: (ship?.address ?? cust.address)?.city ?? '',
+      country: (ship?.address ?? cust.address)?.country ?? meta.country ?? '',
+    },
     country: ship?.address?.country ?? meta.country ?? '',
     items,
     subtotal: (session.amount_subtotal ?? 0) / 100,

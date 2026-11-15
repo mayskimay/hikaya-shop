@@ -95,6 +95,12 @@ export const product = defineType({
       options: { layout: 'tags' },
     }),
     defineField({
+      name: 'weight',
+      title: 'Versandgewicht in Gramm (für DHL-Etiketten, z. B. 450)',
+      type: 'number',
+      validation: (rule) => rule.min(0).integer(),
+    }),
+    defineField({
       name: 'stock',
       title: 'Bestand (Stück). 0 = ausverkauft',
       type: 'number',

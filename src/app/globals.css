@@ -190,3 +190,15 @@ html[data-intro='seen'] .intro { display: none; }
 .info-table small { color: var(--muted); }
 .info-list dt { font-weight: 600; margin-top: 14px; }
 .info-list dd { margin: 2px 0 0; }
+
+/* Versand-Seite (Admin) */
+.admin-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin: 14px 0; background: #fff; }
+.admin-card-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.admin-tag { display: inline-block; font-size: 0.7rem; letter-spacing: 0.08em; background: #fbf3e4; border: 1px solid #c9a35c; padding: 1px 6px; border-radius: 3px; margin: 0 6px; }
+.admin-tag.warn { background: #fdecea; border-color: var(--sale); color: var(--sale); }
+.admin-items { margin: 10px 0; padding-left: 18px; font-size: 0.92rem; }
+.admin-checks { list-style: none; padding: 0; margin: 10px 0; line-height: 1.9; }
+.admin-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.admin-manual { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.admin-manual input, .admin-manual select { min-height: 44px; border: 1px solid var(--line); border-radius: var(--radius); padding: 0 10px; font: inherit; }
+.admin-manual input { flex: 1; min-width: 180px; }

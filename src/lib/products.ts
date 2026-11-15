@@ -19,6 +19,7 @@ export interface Product {
   colors: { name: L; hex: string }[];
   sizes: string[];
   stock: number;
+  weight?: number; // Versandgewicht in Gramm
   images: string[]; // später echte Fotos, z. B. /products/kimono-1.jpg
 }
 

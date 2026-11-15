@@ -113,3 +113,32 @@ export async function sendOwnerNotification(order: Order) {
     order.email || undefined
   );
 }
+
+// Versandbestätigung mit Sendungsverfolgung an die Kundin
+export async function sendShippingConfirmation(
+  order: Order,
+  shipment: { carrier: string; trackingNumber: string; trackingUrl: string }
+) {
+  if (!order.email) return;
+  const de = order.locale !== 'en';
+  const title = de ? 'Deine Bestellung ist unterwegs' : 'Your order is on its way';
+  const body = `<p>${
+    de
+      ? `Deine Bestellung <b>${esc(order.orderNumber)}</b> wurde an ${esc(shipment.carrier)} übergeben.`
+      : `Your order <b>${esc(order.orderNumber)}</b> has been handed over to ${esc(shipment.carrier)}.`
+  }</p>
+  <p>${de ? 'Sendungsnummer' : 'Tracking number'}: <b>${esc(shipment.trackingNumber)}</b></p>
+  ${shipment.trackingUrl ? `<p><a href="${esc(shipment.trackingUrl)}" style="display:inline-block;background:#4A3B4F;color:#fff;padding:12px 22px;text-decoration:none;border-radius:999px">${de ? 'Sendung verfolgen' : 'Track your parcel'}</a></p>` : ''}
+  <p><b>${de ? 'Lieferadresse' : 'Delivery address'}</b><br>${esc(order.shippingName)}<br>${esc(order.shippingAddress).replace(/\n/g, '<br>')}</p>
+  <p style="font-size:13px;color:#666">${
+    de
+      ? 'Es kann einige Stunden dauern, bis die Sendung bei DHL sichtbar ist.'
+      : 'It may take a few hours until the shipment is visible at DHL.'
+  }</p>`;
+  await send(
+    order.email,
+    `${title} – ${order.orderNumber}${order.testMode ? ' [TEST]' : ''}`,
+    layout(title, body, order.testMode),
+    process.env.ORDER_NOTIFY_EMAIL || undefined
+  );
+}
