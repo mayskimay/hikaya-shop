@@ -2,6 +2,10 @@ import { notFound } from 'next/navigation';
 import { getDict } from '@/lib/dict';
 import { isLocale, defaultLocale, locales, formatPrice } from '@/lib/i18n';
 import { shop, countryName } from '@/lib/shop';
+import { activePaymentMethods, dhlLiveForCustomers } from '@/lib/providers';
+
+// Zahlungsarten werden stündlich aus Stripe aktualisiert
+export const revalidate = 3600;
 
 const pages = ['about', 'shipping', 'payment', 'returns', 'contact', 'privacy', 'terms', 'imprint'] as const;
 type PageKey = (typeof pages)[number];
@@ -21,6 +25,8 @@ export default async function InfoPage({
 
   const content = getDict(locale).info[page as PageKey];
   const de = locale === 'de';
+  const carrierLive = dhlLiveForCustomers();
+  const payments = page === 'payment' ? await activePaymentMethods() : null;
 
   return (
     <div className="section container" style={{ maxWidth: 760 }}>
@@ -32,7 +38,7 @@ export default async function InfoPage({
           <thead>
             <tr>
               <th>{de ? 'Zone' : 'Zone'}</th>
-              <th>{de ? 'Versand mit' : 'Carrier'}</th>
+              {carrierLive && <th>{de ? 'Versand mit' : 'Carrier'}</th>}
               <th>{de ? 'Kosten' : 'Cost'}</th>
               <th>{de ? 'Lieferzeit' : 'Delivery time'}</th>
             </tr>
@@ -45,7 +51,7 @@ export default async function InfoPage({
                   <br />
                   <small>{z.countries.map((c) => countryName(c, locale)).join(', ')}</small>
                 </td>
-                <td>{z.carrier}</td>
+                {carrierLive && <td>{z.carrier}</td>}
                 <td>
                   {formatPrice(z.amount, locale)}
                   {z.freeFrom !== undefined && (
@@ -65,6 +71,27 @@ export default async function InfoPage({
       )}
 
       {page === 'shipping' && <p>{shop.packagingNote[locale]}</p>}
+
+      {payments && (
+        payments.methods.length > 0 ? (
+          <>
+            {payments.state === 'test' && (
+              <p className="notice">{de ? 'Testmodus: Es werden keine echten Zahlungen ausgeführt.' : 'Test mode: no real payments are made.'}</p>
+            )}
+            <ul className="info-methods">
+              {payments.methods.map((m) => (
+                <li key={m.id}>{m.name[locale]}</li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p className="notice">
+            {de
+              ? 'Die verfügbaren Zahlungsarten werden hier angezeigt, sobald die Zahlung eingerichtet ist.'
+              : 'Available payment methods will be shown here once payment has been set up.'}
+          </p>
+        )
+      )}
 
       {page === 'imprint' && (
         <dl className="info-list">

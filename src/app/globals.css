@@ -202,3 +202,13 @@ html[data-intro='seen'] .intro { display: none; }
 .admin-manual { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
 .admin-manual input, .admin-manual select { min-height: 44px; border: 1px solid var(--line); border-radius: var(--radius); padding: 0 10px; font: inherit; }
 .admin-manual input { flex: 1; min-width: 180px; }
+
+.info-methods { padding-left: 20px; line-height: 2; }
+
+.admin-status { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.admin-status td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 0.92rem; }
+.admin-state { display: inline-block; min-width: 82px; text-align: center; font-size: 0.72rem; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); }
+.admin-state.live { background: #e8f1e4; border-color: #9cbf8c; }
+.admin-state.test { background: #fbf3e4; border-color: #c9a35c; }
+.admin-state.missing { background: #f4f2f0; color: var(--muted); }
+.admin-state.blocked { background: #fdecea; border-color: var(--sale); color: var(--sale); }

@@ -78,7 +78,7 @@ const de = {
   },
   checkout: {
     successTitle: 'Vielen Dank für deine Bestellung',
-    successText: 'Deine Zahlung ist eingegangen. Sobald dein Paket an DHL übergeben ist, bekommst du eine E-Mail mit der Sendungsnummer zur Sendungsverfolgung.',
+    successText: 'Deine Zahlung ist eingegangen. Sobald dein Paket unterwegs ist, bekommst du eine E-Mail mit der Sendungsnummer zur Sendungsverfolgung.',
     pendingTitle: 'Deine Bestellung ist eingegangen',
     pendingText: 'Deine Zahlung wird noch von der Bank bestätigt (bei Lastschrift kann das einige Tage dauern). Wir versenden, sobald die Zahlung eingegangen ist.',
     invalidTitle: 'Bestellung nicht gefunden',
@@ -103,7 +103,7 @@ const de = {
   info: {
     about: { title: 'Über uns', body: 'Hier steht später die Geschichte von Hikaya.' },
     shipping: { title: 'Versand', body: 'Versandkosten und Lieferzeiten je Land (Platzhalter – Werte in src/lib/shop.ts festlegen):' },
-    payment: { title: 'Zahlung', body: 'Die Zahlung erfolgt sicher über unseren Zahlungsanbieter Stripe. Je nach Land stehen z. B. Karte (Visa, Mastercard), Apple Pay, Google Pay, PayPal, EPS-Überweisung, SEPA-Lastschrift oder Klarna zur Auswahl – welche genau, siehst du auf der Zahlungsseite. Karten- und Bankdaten werden nicht von uns gespeichert. (Platzhalter – an die tatsächlich aktivierten Zahlungsarten anpassen.)' },
+    payment: { title: 'Zahlung', body: 'Die Zahlung erfolgt sicher über unseren Zahlungsanbieter Stripe. Karten- und Bankdaten werden nicht von uns gespeichert. Welche Zahlungsarten für dein Land und deinen Bestellbetrag verfügbar sind, siehst du auf der Zahlungsseite.' },
     returns: { title: 'Rückgabe & Widerruf', body: 'Platzhalter. Hier stehen später die Widerrufsbelehrung (14 Tage), das Muster-Widerrufsformular und die Umtauschbedingungen. Diese Texte müssen rechtlich geprüft werden.' },
     contact: { title: 'Kontakt', body: 'Hier kommt später das Kontaktformular hin.' },
     privacy: { title: 'Datenschutz', body: 'Platzhalter. Die rechtlichen Texte müssen vor dem Start rechtssicher erstellt werden.' },
@@ -192,7 +192,7 @@ const en: Dict = {
   },
   checkout: {
     successTitle: 'Thank you for your order',
-    successText: 'Your payment has been received. As soon as your parcel has been handed over to DHL, you will receive an email with a tracking number.',
+    successText: 'Your payment has been received. As soon as your parcel is on its way, you will receive an email with a tracking number.',
     pendingTitle: 'We have received your order',
     pendingText: 'Your payment is still being confirmed by the bank (this can take a few days for direct debit). We will ship as soon as the payment has arrived.',
     invalidTitle: 'Order not found',
@@ -217,7 +217,7 @@ const en: Dict = {
   info: {
     about: { title: 'About us', body: 'The story of Hikaya will be added here.' },
     shipping: { title: 'Shipping', body: 'Shipping costs and delivery times by country (placeholder – set the values in src/lib/shop.ts):' },
-    payment: { title: 'Payment', body: 'Payment is processed securely by our provider Stripe. Depending on your country you can choose e.g. card (Visa, Mastercard), Apple Pay, Google Pay, PayPal, EPS, SEPA Direct Debit or Klarna – the exact options are shown on the payment page. We do not store card or bank details. (Placeholder – adjust to the payment methods actually enabled.)' },
+    payment: { title: 'Payment', body: 'Payment is processed securely by our provider Stripe. We do not store card or bank details. The payment methods available for your country and order amount are shown on the payment page.' },
     returns: { title: 'Returns & withdrawal', body: 'Placeholder. The withdrawal policy (14 days), model withdrawal form and exchange conditions will be added here. These texts must be legally reviewed.' },
     contact: { title: 'Contact', body: 'The contact form will be added here.' },
     privacy: { title: 'Privacy policy', body: 'Placeholder. Legal texts must be professionally drafted before launch.' },

@@ -4,6 +4,7 @@ import { currentPrice } from '@/lib/products';
 import { allShippingCountries, shippingCost, shop, zoneForCountry } from '@/lib/shop';
 import { isLocale, defaultLocale } from '@/lib/i18n';
 import { getStripeConfig, stripeRequest } from '@/lib/stripe';
+import { dhlLiveForCustomers } from '@/lib/providers';
 
 // Legt bei Stripe eine Checkout-Sitzung an und gibt die Adresse der Zahlungsseite zurück.
 // - Preise, Bestand und Versandkosten werden hier neu berechnet, nie vom Browser übernommen.
@@ -101,7 +102,8 @@ export async function POST(req: Request) {
   const shippingEuro = shippingCost(country, subtotalCents / 100) ?? zone.amount;
   const sp = 'shipping_options[0][shipping_rate_data]';
   params.set(`${sp}[type]`, 'fixed_amount');
-  params.set(`${sp}[display_name]`, `${zone.carrier} – ${zone.label[locale]} (${zone.delivery[locale]})`.slice(0, 100));
+  const carrierName = dhlLiveForCustomers() ? zone.carrier : locale === 'de' ? 'Standardversand' : 'Standard shipping';
+  params.set(`${sp}[display_name]`, `${carrierName} – ${zone.label[locale]} (${zone.delivery[locale]})`.slice(0, 100));
   params.set(`${sp}[fixed_amount][amount]`, String(Math.round(shippingEuro * 100)));
   params.set(`${sp}[fixed_amount][currency]`, shop.currency);
 

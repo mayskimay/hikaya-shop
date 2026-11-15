@@ -16,12 +16,14 @@ export default function CartView({
   products,
   paymentReady,
   testMode,
+  carrierLive,
 }: {
   locale: Locale;
   t: Dict['cart'];
   products: Product[];
   paymentReady: boolean;
   testMode: boolean;
+  carrierLive: boolean; // Versanddienst nur nennen, wenn er wirklich verbunden ist
 }) {
   const { items, remove, setQty } = useCart();
   const [busy, setBusy] = useState(false);
@@ -148,7 +150,7 @@ export default function CartView({
           </select>
           {zone && (
             <small className="note">
-              {t.carrier}: {zone.carrier} · {t.delivery}: {zone.delivery[locale]}
+              {carrierLive && `${t.carrier}: ${zone.carrier} · `}{t.delivery}: {zone.delivery[locale]}
               {zone.freeFrom !== undefined && ` · ${t.freeFrom} ${formatPrice(zone.freeFrom, locale)}`}
             </small>
           )}

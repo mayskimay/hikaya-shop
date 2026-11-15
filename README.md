@@ -70,6 +70,15 @@ Wichtig: Sobald das CMS verbunden ist, werden die Beispielprodukte nicht mehr an
 4. Echte Texte für Über uns, Versand, Zahlung
 5. Hero-Foto, Domain
 
+## Anbieter-Status
+
+Auf der Versand-Seite `/admin/versand` zeigt „Anbieter-Status“ für jeden Anbieter, ob er **aktiv**, im **Testmodus**, **gesperrt** (z. B. Live-Schlüssel ohne Freigabe) oder **fehlt**. Grundsätze:
+
+- **Zahlungsarten** zeigt Stripe auf seiner Zahlungsseite – nur die im Stripe-Dashboard eingeschalteten und für das Konto verfügbaren. Die Seite *Zahlung* im Shop liest dieselbe Liste aus Stripe (stündlich aktualisiert).
+- **„DHL Express“** wird Kundinnen erst genannt, wenn DHL **live** verbunden und die Absenderadresse vollständig ist. Vorher steht dort „Standardversand“.
+- **Logos** von Zahlungs- und Versandanbietern werden nur verwendet, wenn die offiziellen Dateien und die Erlaubnis vorliegen (Stripe zeigt die Zahlungslogos auf seiner Seite selbst).
+- **Bestellstatus:** Zahlung ausstehend → Bezahlt → Versendet → Zugestellt; außerdem Zahlung fehlgeschlagen, Erstattet / Teilweise erstattet (aus Stripe) und Storniert.
+
 ## Bestellablauf – so funktioniert er
 
 1. **Warenkorb** (`/de/cart`): Mengen ändern, Lieferland wählen → Versandkosten und Gesamtsumme werden angezeigt. Die Kundin bestätigt AGB, Widerrufsbelehrung und Datenschutz.
@@ -127,7 +136,7 @@ Hinweis: Der Link zur Sendungsverfolgung führt zur öffentlichen DHL-Seite (`dh
    - `NEXT_PUBLIC_SITE_URL` = Adresse des Shops (z. B. `https://hikaya-shop.vercel.app`)
 5. **Webhook anlegen:** *Entwickler → Webhooks → Endpunkt hinzufügen*
    - URL: `https://DEINE-SHOP-ADRESSE/api/stripe/webhook`
-   - Ereignisse: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`
+   - Ereignisse: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `charge.refunded` (Erstattungen)
    - Danach das **Signing secret** (`whsec_…`) kopieren und bei Vercel als `STRIPE_WEBHOOK_SECRET` eintragen.
 6. **Bestellungen speichern:** Auf [sanity.io/manage](https://www.sanity.io/manage) → Projekt → *API → Tokens → Add API token*, Rechte **Editor**. Bei Vercel als `SANITY_API_WRITE_TOKEN` eintragen.
 7. **Bestell-E-Mails (optional, empfohlen):** Konto bei [resend.com](https://resend.com) anlegen, die eigene Domain bestätigen und einen API-Schlüssel erstellen. Bei Vercel eintragen: `RESEND_API_KEY`, `ORDER_EMAIL_FROM` (z. B. `Hikaya <bestellung@hikaya.at>`), `ORDER_NOTIFY_EMAIL` (Postfach der Inhaberin). Ohne diese Werte funktioniert der Shop, es werden nur keine E-Mails verschickt.

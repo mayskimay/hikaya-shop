@@ -7,7 +7,15 @@
 
 import { apiVersion, dataset, isSanityConfigured, projectId } from '@/sanity/env';
 
-export type OrderStatus = 'awaiting_payment' | 'paid' | 'payment_failed' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatus =
+  | 'awaiting_payment'
+  | 'paid'
+  | 'payment_failed'
+  | 'shipped'
+  | 'delivered'
+  | 'refunded'
+  | 'partially_refunded'
+  | 'cancelled';
 
 export interface OrderItem {
   slug: string;
@@ -130,6 +138,8 @@ export async function saveOrder(
     existing?.status === 'paid' ||
     existing?.status === 'shipped' ||
     existing?.status === 'delivered' ||
+    existing?.status === 'refunded' ||
+    existing?.status === 'partially_refunded' ||
     existing?.status === 'cancelled';
   if (!keepStatus) {
     mutations.push({ patch: { id, set: { status: order.status, paymentMethod: order.paymentMethod } } });
@@ -239,4 +249,27 @@ export async function updateTracking(orderNumber: string, state: string, descrip
     set.deliveredAt = new Date().toISOString();
   }
   await sanityMutate([{ patch: { id: orderDocId(orderNumber), set } }]);
+}
+
+// Erstattung (aus dem Stripe-Webhook "charge.refunded"): Bestellung über die Zahlung finden
+export async function markRefunded(paymentIntent: string, full: boolean, refundedEuro: number): Promise<string | null> {
+  if (!canStoreOrders() || !paymentIntent) return null;
+  const id = await sanityQuery<string | null>(
+    `*[_type == "order" && stripePaymentIntent == $pi][0]._id`,
+    { pi: paymentIntent }
+  );
+  if (!id) return null;
+  await sanityMutate([
+    {
+      patch: {
+        id,
+        set: {
+          status: full ? 'refunded' : 'partially_refunded',
+          refundedAmount: refundedEuro,
+          refundedAt: new Date().toISOString(),
+        },
+      },
+    },
+  ]);
+  return id;
 }

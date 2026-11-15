@@ -2,6 +2,7 @@ import { getDict } from '@/lib/dict';
 import { getProducts } from '@/lib/data';
 import { isLocale, defaultLocale } from '@/lib/i18n';
 import { stripeMode } from '@/lib/stripe';
+import { dhlLiveForCustomers } from '@/lib/providers';
 import CartView from '@/components/CartView';
 
 export const dynamic = 'force-dynamic';
@@ -27,6 +28,7 @@ export default async function CartPage({
         products={products}
         paymentReady={mode !== null}
         testMode={mode === 'test'}
+        carrierLive={dhlLiveForCustomers()}
       />
     </div>
   );

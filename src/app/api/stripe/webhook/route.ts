@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifyStripeSignature, getStripeConfig, type CheckoutSession } from '@/lib/stripe';
 import { getSession, buildOrder } from '@/lib/fulfillment';
-import { saveOrder, setOrderStatus, orderNumberFor } from '@/lib/orders';
+import { saveOrder, setOrderStatus, orderNumberFor, markRefunded } from '@/lib/orders';
 import { sendCustomerConfirmation, sendOwnerNotification } from '@/lib/email';
 
 // Stripe meldet hier, wenn eine Zahlung abgeschlossen ist. Nur über diesen Weg gilt
@@ -10,7 +10,7 @@ import { sendCustomerConfirmation, sendOwnerNotification } from '@/lib/email';
 // Im Stripe-Dashboard einrichten (Entwickler → Webhooks), Adresse:
 //   https://DEINE-DOMAIN/api/stripe/webhook
 // Ereignisse: checkout.session.completed, checkout.session.async_payment_succeeded,
-//             checkout.session.async_payment_failed
+//             checkout.session.async_payment_failed, charge.refunded
 // Das "Signing secret" (whsec_…) als STRIPE_WEBHOOK_SECRET eintragen.
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,7 @@ interface StripeEvent {
   id: string;
   type: string;
   livemode: boolean;
-  data: { object: CheckoutSession };
+  data: { object: CheckoutSession & { payment_intent?: string | null; amount?: number; amount_refunded?: number; refunded?: boolean } };
 }
 
 export async function POST(req: Request) {
@@ -42,6 +42,19 @@ export async function POST(req: Request) {
   if (!cfg.ok) return NextResponse.json({ error: 'not_configured' }, { status: 503 });
   if (event.livemode !== (cfg.config.mode === 'live')) {
     return NextResponse.json({ received: true, ignored: 'mode_mismatch' });
+  }
+
+  // Erstattung im Stripe-Dashboard → Bestellstatus "Erstattet"
+  if (event.type === 'charge.refunded') {
+    const charge = event.data.object;
+    const pi = typeof charge.payment_intent === 'string' ? charge.payment_intent : '';
+    try {
+      await markRefunded(pi, charge.refunded === true, (charge.amount_refunded ?? 0) / 100);
+      return NextResponse.json({ received: true });
+    } catch (error) {
+      console.error('[Webhook] Erstattung konnte nicht gespeichert werden', error);
+      return NextResponse.json({ error: 'processing_failed' }, { status: 500 });
+    }
   }
 
   const relevant = [

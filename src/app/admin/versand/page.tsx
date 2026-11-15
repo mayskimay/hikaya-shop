@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { listOrders, canStoreOrders, type ShippingOrder } from '@/lib/orders';
-import { dhlExpressConfig, senderProblems } from '@/lib/shipping/dhl';
-import { emailConfigured } from '@/lib/email';
+import { providerStatus, activePaymentMethods, type ProviderState } from '@/lib/providers';
 import { zoneForCountry } from '@/lib/shop';
 import ShipmentActions from '@/components/admin/ShipmentActions';
 
@@ -11,13 +10,12 @@ export const dynamic = 'force-dynamic';
 const eur = (v: number) => new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR' }).format(v);
 const date = (s?: string) => (s ? new Date(s).toLocaleString('de-AT', { dateStyle: 'short', timeStyle: 'short' }) : '');
 
-function Check({ ok, children }: { ok: boolean; children: ReactNode }) {
-  return (
-    <li style={{ color: ok ? 'inherit' : 'var(--sale)' }}>
-      {ok ? '✓' : '✗'} {children}
-    </li>
-  );
-}
+const STATE_LABEL: Record<ProviderState, string> = {
+  live: 'aktiv',
+  test: 'Testmodus',
+  missing: 'fehlt',
+  blocked: 'gesperrt',
+};
 
 function OrderCard({ o }: { o: ShippingOrder }) {
   const zone = zoneForCountry(o.address?.country || o.country);
@@ -80,8 +78,8 @@ function OrderCard({ o }: { o: ShippingOrder }) {
 }
 
 export default async function VersandPage() {
-  const dhl = dhlExpressConfig();
-  const sender = senderProblems();
+  const status = providerStatus();
+  const payments = await activePaymentMethods();
   const storage = canStoreOrders();
   const orders = storage ? await listOrders(['paid', 'awaiting_payment', 'shipped', 'delivered']) : [];
   const toShip = orders.filter((o) => o.status === 'paid');
@@ -93,21 +91,30 @@ export default async function VersandPage() {
       <h1>Versand</h1>
 
       <div className="admin-card">
-        <strong>Einrichtung</strong>
-        <ul className="admin-checks">
-          <Check ok={storage}>Bestellungen werden gespeichert (Sanity-Token)</Check>
-          <Check ok={dhl.ok}>
-            DHL Express verbunden {dhl.ok ? `(Modus: ${dhl.mode === 'test' ? 'TEST – Etiketten sind nicht gültig' : 'LIVE'})` : `– ${dhl.reason}`}
-          </Check>
-          <Check ok={sender.length === 0}>
-            Absenderadresse vollständig {sender.length ? `– fehlt: ${sender.join(', ')}` : ''}
-          </Check>
-          <Check ok={Boolean(process.env.DHL_TRACKING_API_KEY)}>DHL-Sendungsverfolgung (Status-Abfrage)</Check>
-          <Check ok={emailConfigured()}>Versand-E-Mails an Kundinnen</Check>
-        </ul>
+        <strong>Anbieter-Status</strong>
+        <table className="admin-status">
+          <tbody>
+            {status.map((p) => (
+              <tr key={p.id}>
+                <td>
+                  <span className={`admin-state ${p.state}`}>{STATE_LABEL[p.state]}</span>
+                </td>
+                <td>
+                  <strong>{p.name}</strong>
+                  <br />
+                  <small className="note">{p.detail}</small>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p style={{ margin: '12px 0 4px' }}>
+          <strong>Zahlungsarten im Stripe-Konto aktiv:</strong>{' '}
+          {payments.methods.length ? payments.methods.map((m) => m.name.de).join(', ') : '– (noch keine oder Stripe nicht verbunden)'}
+        </p>
         <small className="note">
-          Ohne DHL-Zugang kannst du Etiketten im DHL-Portal erstellen und die Sendungsnummer hier eintragen –
-          die Kundin bekommt dann trotzdem die Versand-E-Mail mit Sendungsverfolgung.
+          Kundinnen sehen nur, was hier aktiv ist: Zahlungsarten zeigt Stripe auf der Zahlungsseite, „DHL Express“
+          erscheint im Checkout erst im Live-Modus. Ohne DHL-Zugang kannst du die Sendungsnummer unten von Hand eintragen.
         </small>
       </div>
 

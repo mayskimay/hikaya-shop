@@ -70,8 +70,8 @@ export const shop = {
   },
   // Hinweis zu Verpackung und Versand im Warenkorb und auf der Versandseite
   packagingNote: {
-    de: 'Deine Bestellung wird sorgfältig verpackt und mit DHL versendet. Nach dem Versand bekommst du eine E-Mail mit Sendungsnummer zur Sendungsverfolgung.',
-    en: 'Your order is carefully packed and shipped with DHL. Once shipped, you will receive an email with a tracking number.',
+    de: 'Deine Bestellung wird sorgfältig verpackt. Nach dem Versand bekommst du eine E-Mail mit Sendungsnummer zur Sendungsverfolgung.',
+    en: 'Your order is carefully packed. Once shipped, you will receive an email with a tracking number.',
   } as L,
 
   // Steuerhinweis, der im Warenkorb und in E-Mails erscheint – PLATZHALTER.
