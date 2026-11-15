@@ -52,25 +52,73 @@ Wichtig: Sobald das CMS verbunden ist, werden die Beispielprodukte nicht mehr an
 - `src/lib/site.ts` – E-Mail und Social-Media-Links
 - `src/components/` – Header, Footer, Produktkarte, Galerie, Warenkorb
 - `src/lib/cart.tsx` – Warenkorb (wird im Browser gespeichert)
+- `src/lib/shop.ts` – Versandzonen, Firmenangaben, Steuerhinweis
+- `src/app/api/checkout/` – legt die Stripe-Zahlung an
+- `src/app/api/stripe/webhook/` – empfängt Zahlungsbestätigungen von Stripe
+- `src/lib/stripe.ts`, `orders.ts`, `fulfillment.ts`, `email.ts` – Zahlung, Bestellungen, E-Mails (nur Server)
+- `src/sanity/schemaTypes/order.ts` – Bestellungen im CMS
 - `src/app/globals.css` – Farben und Gestaltung
 
 ## Noch offen
 
-1. Checkout und Zahlung (Stripe) und Versandoptionen
-2. Kontaktformular
-3. Echte Texte für Über uns, Versand, Zahlung, Rückgabe
-4. Rechtliche Texte (Datenschutz, AGB, Impressum, Widerruf) – aktuell Platzhalter, müssen rechtssicher erstellt werden
+1. ⚠️ Rechtliche Texte (Impressum, AGB, Datenschutz, Widerrufsbelehrung + Muster-Formular) – aktuell Platzhalter, **müssen rechtlich geprüft/erstellt werden**
+2. ⚠️ Shop-Angaben in `src/lib/shop.ts` (Firmenname, Adresse, Gewerbe, UID, Steuerhinweis) und Versandkosten festlegen
+3. Kontaktformular
+4. Echte Texte für Über uns, Versand, Zahlung
 5. Hero-Foto, Domain
-6. Webhook für Bestand und Bestell-E-Mail nach der Zahlung
 
-## Zahlung einrichten (Stripe)
+## Bestellablauf – so funktioniert er
 
-Die Kasse leitet zu Stripe Checkout weiter. Zahlungsmethoden (Karte, Apple Pay, Google Pay, PayPal, Klarna, EPS usw.) werden im Stripe-Dashboard unter *Einstellungen → Zahlungsmethoden* aktiviert.
+1. **Warenkorb** (`/de/cart`): Mengen ändern, Lieferland wählen → Versandkosten und Gesamtsumme werden angezeigt. Die Kundin bestätigt AGB, Widerrufsbelehrung und Datenschutz.
+2. **„Weiter zur Zahlung“** → der Server (`/api/checkout`) prüft Preise, Bestand und Versandkosten neu und legt eine Stripe-Checkout-Sitzung an.
+3. **Stripe-Zahlungsseite**: Die Kundin gibt E-Mail, Name, Telefon und Lieferadresse ein und wählt eine Zahlungsart. **Karten- und Bankdaten landen nur bei Stripe**, nie im Shop.
+4. **Webhook** (`/api/stripe/webhook`): Stripe meldet die Zahlung. Der Shop prüft die Signatur, speichert die Bestellung in Sanity (Menü *Bestellung*), bucht den Bestand ab und verschickt die E-Mails (Kundin + Inhaberin). Bei SEPA-Lastschrift steht die Bestellung zuerst auf „Zahlung ausstehend“ und wird automatisch auf „Bezahlt“ gesetzt, sobald das Geld da ist.
+5. **Danke-Seite** (`/de/checkout/success`): zeigt Bestellnummer, Artikel, Summe und Lieferadresse.
 
-1. Konto auf [stripe.com](https://stripe.com) anlegen (die Inhaberin selbst, mit Firmen- und Bankdaten).
-2. Im Dashboard den **Testmodus** wählen und unter *Entwickler → API-Schlüssel* den **geheimen Schlüssel** (`sk_test_…`) kopieren.
-3. Bei Vercel unter *Settings → Environment Variables* anlegen: `STRIPE_SECRET_KEY` = der Schlüssel. Danach neu ausliefern ("Redeploy").
-4. Mit der Testkarte `4242 4242 4242 4242` (beliebiges Ablaufdatum in der Zukunft, beliebiger Code) eine Bestellung durchspielen.
-5. Zum Start auf den Live-Modus wechseln und den Schlüssel `sk_live_…` eintragen.
+Sicherheit: Alle Schlüssel stehen nur in Umgebungsvariablen (Vorlage: `.env.example`). Ein Live-Schlüssel (`sk_live_…`) wird **nur** angenommen, wenn zusätzlich `STRIPE_ALLOW_LIVE=true` gesetzt ist.
 
-Versandländer und Versandkosten stehen in `src/lib/shop.ts`.
+## Zahlung einrichten (Stripe) – Schritt für Schritt
+
+### A. Testmodus (zuerst)
+
+1. **Stripe-Konto anlegen** auf [stripe.com](https://stripe.com) – am besten direkt durch die Inhaberin (Firmen-, Ausweis- und Bankdaten gehören ihr).
+2. Im Dashboard oben rechts den **Testmodus** (bzw. eine *Sandbox*) einschalten.
+3. **Geheimen Schlüssel kopieren:** *Entwickler → API-Schlüssel* → „Geheimer Schlüssel“ (`sk_test_…`). Den Schlüssel nie per Chat/E-Mail weitergeben und nie in den Code schreiben.
+4. **Bei Vercel eintragen:** Projekt → *Settings → Environment Variables*:
+   - `STRIPE_SECRET_KEY` = `sk_test_…`
+   - `NEXT_PUBLIC_SITE_URL` = Adresse des Shops (z. B. `https://hikaya-shop.vercel.app`)
+5. **Webhook anlegen:** *Entwickler → Webhooks → Endpunkt hinzufügen*
+   - URL: `https://DEINE-SHOP-ADRESSE/api/stripe/webhook`
+   - Ereignisse: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`
+   - Danach das **Signing secret** (`whsec_…`) kopieren und bei Vercel als `STRIPE_WEBHOOK_SECRET` eintragen.
+6. **Bestellungen speichern:** Auf [sanity.io/manage](https://www.sanity.io/manage) → Projekt → *API → Tokens → Add API token*, Rechte **Editor**. Bei Vercel als `SANITY_API_WRITE_TOKEN` eintragen.
+7. **Bestell-E-Mails (optional, empfohlen):** Konto bei [resend.com](https://resend.com) anlegen, die eigene Domain bestätigen und einen API-Schlüssel erstellen. Bei Vercel eintragen: `RESEND_API_KEY`, `ORDER_EMAIL_FROM` (z. B. `Hikaya <bestellung@hikaya.at>`), `ORDER_NOTIFY_EMAIL` (Postfach der Inhaberin). Ohne diese Werte funktioniert der Shop, es werden nur keine E-Mails verschickt.
+8. **Zahlungsarten wählen:** *Einstellungen → Zahlungen → Zahlungsmethoden*. Für Österreich sinnvoll: Karten, Apple Pay/Google Pay, **EPS**, **PayPal**, **SEPA-Lastschrift**, ggf. Klarna. Manche Methoden muss Stripe erst für das Konto freischalten – angezeigt wird nur, was für Konto, Land und Betrag verfügbar ist.
+9. **Neu ausliefern:** Vercel → *Deployments* → „Redeploy“.
+10. **Testen:** Bestellung mit Testkarte `4242 4242 4242 4242` (beliebiges Datum in der Zukunft, beliebige Prüfziffer). Danach prüfen: Danke-Seite, Bestellung im Studio unter *Bestellung* (mit „[TEST]“), Bestand reduziert, E-Mails angekommen. Unter *Entwickler → Webhooks* sieht man, ob Stripe den Shop erreicht hat.
+
+### B. Bestellungen prüfen (Datenschutz)
+
+Bestellungen werden mit einer ID wie `orders.HK-20261115-ABC123` gespeichert. Dokumente mit Punkt in der ID sind bei Sanity nicht öffentlich abrufbar. **Einmal prüfen:** im Browser
+`https://PROJECT_ID.apicdn.sanity.io/v2025-01-01/data/query/production?query=*[_type=="order"]` öffnen – das Ergebnis muss **leer** sein (`"result":[]`), obwohl im Studio Bestellungen zu sehen sind.
+
+### C. Auf echte Zahlungen umstellen (erst wenn alles geprüft ist)
+
+Voraussetzungen: Stripe-Konto vollständig verifiziert (Firma, Ausweis, Bankkonto), Rechtstexte und Shop-Angaben fertig und geprüft, Testbestellungen erfolgreich.
+
+1. Im Stripe-Dashboard den Testmodus ausschalten und unter *Entwickler → API-Schlüssel* den **Live-Schlüssel** (`sk_live_…`) kopieren.
+2. Im Live-Modus den **Webhook erneut anlegen** (gleiche URL und Ereignisse) – er hat ein eigenes `whsec_…`.
+3. Bei Vercel ändern: `STRIPE_SECRET_KEY` = `sk_live_…`, `STRIPE_WEBHOOK_SECRET` = neues Secret, `STRIPE_ALLOW_LIVE` = `true`. Redeploy.
+4. Eine **echte Bestellung mit kleinem Betrag** machen, prüfen und im Stripe-Dashboard erstatten.
+
+Zurück in den Testmodus: Test-Schlüssel und Test-Webhook-Secret wieder eintragen (oder `STRIPE_ALLOW_LIVE` entfernen – dann ist die Kasse gesperrt, bis ein Test-Schlüssel eingetragen ist).
+
+### Wo was eingestellt wird
+
+| Was | Wo |
+| --- | --- |
+| Versandzonen, -kosten, Lieferzeiten | `src/lib/shop.ts` → `shippingZones` |
+| Firmenangaben (Impressum, E-Mails), Steuerhinweis | `src/lib/shop.ts` → `company`, `vatNote` |
+| Zahlungsarten | Stripe-Dashboard → Zahlungsmethoden |
+| Bestellstatus, Sendungsnummer | Studio → *Bestellung* |
+| Texte (DE/EN) | `src/lib/dict.ts` |

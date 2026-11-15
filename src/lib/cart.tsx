@@ -14,6 +14,7 @@ interface CartContextValue {
   count: number;
   add: (item: Omit<CartItem, 'qty'>) => void;
   remove: (slug: string, size: string, color: string) => void;
+  setQty: (slug: string, size: string, color: string, qty: number) => void;
   clear: () => void;
 }
 
@@ -57,12 +58,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const setQty: CartContextValue['setQty'] = (slug, size, color, qty) => {
+    const q = Math.max(0, Math.min(10, Math.floor(qty)));
+    setItems((prev) =>
+      q === 0
+        ? prev.filter((i) => !(i.slug === slug && i.size === size && i.color === color))
+        : prev.map((i) => (i.slug === slug && i.size === size && i.color === color ? { ...i, qty: q } : i))
+    );
+  };
+
   const clear = () => setItems([]);
 
   const count = items.reduce((sum, i) => sum + i.qty, 0);
 
   return (
-    <CartContext.Provider value={{ items, count, add, remove, clear }}>
+    <CartContext.Provider value={{ items, count, add, remove, setQty, clear }}>
       {children}
     </CartContext.Provider>
   );
